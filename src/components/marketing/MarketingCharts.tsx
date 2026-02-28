@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { 
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, 
   ResponsiveContainer, Tooltip, XAxis, YAxis, ComposedChart, Line
@@ -16,7 +17,13 @@ interface MarketingChartsProps {
 const fmtK = (v: number) => `$${(v / 1000).toFixed(0)}k`;
 
 export function MarketingCharts({ trendData, funnelData, channelData, isLoading }: MarketingChartsProps) {
-  if (isLoading) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (isLoading || !isMounted) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[...Array(4)].map((_, i) => (
@@ -34,7 +41,7 @@ export function MarketingCharts({ trendData, funnelData, channelData, isLoading 
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">Lead Generation Trend</h3>
           <p className="text-xs text-neutral-500">Monthly leads vs conversion performance</p>
         </div>
-        <div className="h-[250px] w-full">
+        <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trendData}>
               <defs>
@@ -87,7 +94,7 @@ export function MarketingCharts({ trendData, funnelData, channelData, isLoading 
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">Channel Performance</h3>
           <p className="text-xs text-neutral-500">Leads and ROI by acquisition channel</p>
         </div>
-        <div className="h-[250px] w-full">
+        <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={channelData} layout="vertical" margin={{ left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" opacity={0.5} />
@@ -117,7 +124,7 @@ export function MarketingCharts({ trendData, funnelData, channelData, isLoading 
             </div>
           </div>
         </div>
-        <div className="h-[250px] w-full">
+        <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
