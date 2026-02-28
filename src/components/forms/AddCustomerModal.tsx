@@ -47,7 +47,11 @@ const customerSchema = z.object({
   country: z.string().default('USA'),
 });
 
-export function AddCustomerModal() {
+interface AddCustomerModalProps {
+  onCustomerAdded?: () => void;
+}
+
+export function AddCustomerModal({ onCustomerAdded }: AddCustomerModalProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
@@ -79,13 +83,14 @@ export function AddCustomerModal() {
     });
     setOpen(false);
     form.reset();
+    if (onCustomerAdded) onCustomerAdded();
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-          <Plus className="mr-2 h-4 w-4" /> Add Customer
+        <Button className="h-12 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] gap-2 shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02]">
+          <Plus className="h-4 w-4" /> Add Customer
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">

@@ -7,6 +7,7 @@ import { ProfitLossChart } from '@/components/charts/ProfitLossChart';
 import { mockData } from '@/lib/mock-data';
 import { AddExpenseModal } from '@/components/forms/AddExpenseModal';
 import { CreateInvoiceModal } from '@/components/forms/CreateInvoiceModal';
+import { Button } from '@/components/ui/button';
 
 // Icons
 import {
@@ -20,7 +21,11 @@ import {
   DollarSign,
   Briefcase,
   PieChart as PieChartIcon,
-  Calculator
+  Calculator,
+  Sparkles,
+  RefreshCw,
+  LayoutDashboard,
+  FileDigit
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -34,14 +39,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
       {/* 1. Greeting */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+      <div className="space-y-2">
+        <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">
           {greeting()}, {user?.name || 'User'}
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Here&apos;s what&apos;s happening with your business today.
+        <p className="text-xs font-bold text-neutral-400 uppercase tracking-[0.2em] italic ml-1.5 flex items-center gap-2">
+          Here&apos;s what&apos;s happening with your business today <Sparkles className="h-3 w-3 text-indigo-400" />
         </p>
       </div>
 
@@ -94,33 +99,35 @@ export default function Dashboard() {
       </div>
 
       {/* 3. Create Actions */}
-      <div className="flex flex-wrap gap-3">
-        <button className="flex items-center space-x-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:border-emerald-500 px-4 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm">
-          <CreditCard className="h-4 w-4" />
-          <span>Get Paid Online</span>
-        </button>
+      <div className="flex flex-wrap gap-4 pt-4">
+        <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
+          <CreditCard className="h-4 w-4" /> Get Paid Online
+        </Button>
         <CreateInvoiceModal />
-        <button className="flex items-center space-x-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:border-emerald-500 px-4 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm">
-          <DocumentText className="h-4 w-4" />
-          <span>Create Check</span>
-        </button>
-        <button className="flex items-center space-x-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:border-emerald-500 px-4 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm">
-          <Download className="h-4 w-4" />
-          <span>Add Bank Deposit</span>
-        </button>
+        <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
+          <FileDigit className="h-4 w-4" /> Create Check
+        </Button>
+        <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
+          <Download className="h-4 w-4" /> Add Bank Deposit
+        </Button>
         <AddExpenseModal />
       </div>
 
       {/* 4. Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Sales & Get Paid Funnel */}
-        <div className="lg:col-span-2 bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-6 overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-              <DollarSign className="h-5 w-5 mr-2 text-emerald-600 dark:text-emerald-400" /> 
-              Sales & Get Paid
-            </h2>
-            <button className="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">View Details</button>
+        <div className="lg:col-span-2 bg-white dark:bg-neutral-900 rounded-[2rem] shadow-sm border border-neutral-100 dark:border-neutral-800 p-10 overflow-hidden">
+          <div className="flex justify-between items-center mb-8">
+            <div className="space-y-1">
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="h-1 w-12 bg-indigo-600 rounded-full" />
+                  <h2 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter flex items-center">
+                    <DollarSign className="h-5 w-5 mr-2 text-indigo-600" /> Sales & Revenue
+                  </h2>
+               </div>
+               <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-14">Invoice flow & payment tracking</p>
+            </div>
+            <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-neutral-50 px-4 h-10 rounded-xl">View Details</Button>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -158,59 +165,74 @@ export default function Dashboard() {
         </div>
 
         {/* Right: Bank Accounts */}
-        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-6 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Bank Accounts</h2>
-            <button className="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">Review</button>
+        <div className="bg-white dark:bg-neutral-900 rounded-[2rem] shadow-sm border border-neutral-100 dark:border-neutral-800 p-10 flex flex-col">
+          <div className="flex justify-between items-center mb-10">
+            <div className="space-y-1">
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="h-1 w-12 bg-indigo-600 rounded-full" />
+                  <h2 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Liquid Capital</h2>
+               </div>
+               <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-15">Real-time banking data</p>
+            </div>
+            <Button variant="ghost" className="h-8 w-8 p-0 rounded-xl">
+               <RefreshCw className="h-4 w-4 text-neutral-300" />
+            </Button>
           </div>
           
-          <div className="mb-6">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Balance</p>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
+          <div className="mb-10">
+            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">Total Net Position</p>
+            <h3 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">
               ${mockData.bankAccounts.reduce((acc, account) => acc + account.balance, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </h3>
           </div>
 
-          <div className="space-y-4 flex-1">
+          <div className="space-y-6 flex-1">
             {mockData.bankAccounts.map((account) => (
-              <div key={account.id} className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-neutral-700 last:border-0 last:pb-0">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{account.name}</span>
-                <span className={`text-sm font-semibold ${account.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+              <div key={account.id} className="flex justify-between items-center pb-6 border-b border-neutral-50 dark:border-neutral-800 last:border-0 last:pb-0">
+                <span className="text-[11px] font-black text-neutral-500 uppercase tracking-widest truncate max-w-[140px]">{account.name}</span>
+                <span className={`text-[13px] font-black tracking-tighter ${account.balance < 0 ? 'text-rose-600' : 'text-indigo-950 dark:text-white'}`}>
                   ${Math.abs(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             ))}
           </div>
           
-          <button className="mt-4 w-full py-2 bg-gray-50 dark:bg-neutral-900/50 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors border border-gray-200 dark:border-neutral-700">
-            Link New Account
-          </button>
+          <Button className="mt-8 w-full h-12 bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-2xl text-[10px] font-black uppercase tracking-widest text-neutral-500 dark:text-neutral-400 transition-all border border-neutral-200 dark:border-neutral-700">
+            Link Financial Account
+          </Button>
         </div>
       </div>
 
       {/* 5. Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-6">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Revenue Overview</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Monthly revenue for the last 6 months</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white dark:bg-neutral-900 rounded-[2rem] border border-neutral-100 dark:border-neutral-800 p-8 shadow-sm">
+          <div className="mb-10">
+             <div className="flex items-center gap-3 mb-2">
+                <div className="h-1 w-12 bg-indigo-600 rounded-full" />
+                <h2 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Performance Tracking</h2>
+             </div>
+             <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-15 italic">Monthly revenue analytics</p>
           </div>
           <RevenueChart />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-6">
-            <div className="mb-6 text-center">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Expenses Detail</h2>
-            </div>
-            <ExpensePieChart />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-white dark:bg-neutral-900 rounded-[2rem] border border-neutral-100 dark:border-neutral-800 p-8 shadow-sm">
+             <div className="mb-8 text-center">
+                <div className="h-1 w-12 bg-indigo-600 rounded-full mx-auto mb-2" />
+                <h2 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Expenditure</h2>
+                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest italic mt-1">Allocation breakdown</p>
+             </div>
+             <ExpensePieChart />
           </div>
           
-          <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-6">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profit & Loss</h2>
-            </div>
-            <ProfitLossChart />
+          <div className="bg-white dark:bg-neutral-900 rounded-[2rem] border border-neutral-100 dark:border-neutral-800 p-8 shadow-sm">
+             <div className="mb-8">
+                <div className="h-1 w-12 bg-indigo-600 rounded-full mb-2" />
+                <h2 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Bottom Line</h2>
+                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest italic mt-1">P&L Overview</p>
+             </div>
+             <ProfitLossChart />
           </div>
         </div>
       </div>

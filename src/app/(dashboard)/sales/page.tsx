@@ -11,8 +11,10 @@ import { DataTable } from '@/components/tables/DataTable';
 import { Sale, SalesSummaryKPIs } from '@/types/sale';
 import { salesService } from '@/services/sales.service';
 import Link from 'next/link';
-import { MoreHorizontal, FileText, CheckCircle2, Mail, Send } from 'lucide-react';
+import { MoreHorizontal, FileText, CheckCircle2, Mail, Send, ShoppingCart, Sparkles, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -161,46 +163,94 @@ export default function SalesPage() {
   }, [statusFilter]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">Sales & Revenue</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Comprehensive dashboard for managing invoices and revenue tracking.</p>
+    <ProtectedRoute>
+      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+               <div className="h-10 w-10 bg-indigo-950 dark:bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                  <ShoppingCart className="h-6 w-6" />
+               </div>
+               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Sales & Revenue</h1>
+            </div>
+            <p className="text-xs font-bold text-neutral-400 uppercase tracking-[0.2em] italic ml-1.5 flex items-center gap-2">
+               Comprehensive dashboard for managing invoices and revenue tracking <Sparkles className="h-3 w-3 text-indigo-400" />
+            </p>
+          </div>
+          
+          <div className="flex gap-3">
+             <AddSaleModal />
+          </div>
         </div>
-        <AddSaleModal />
+
+        <Tabs defaultValue="overview" className="space-y-10">
+          <div className="border-b border-neutral-100 dark:border-neutral-800 sticky top-0 bg-neutral-50/80 dark:bg-neutral-900/80 backdrop-blur-xl z-30 -mx-4 md:-mx-8 px-4 md:px-8">
+            <TabsList className="h-16 bg-transparent gap-8 p-0">
+               <TabsTrigger 
+                 value="overview" 
+                 className="h-full border-b-4 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent rounded-none px-2 font-black uppercase tracking-widest text-[10px] text-neutral-400 data-[state=active]:text-indigo-950 dark:data-[state=active]:text-white transition-all gap-2"
+               >
+                 <LayoutDashboard className="h-4 w-4 mb-0.5" /> Overview
+               </TabsTrigger>
+               <TabsTrigger 
+                 value="invoices" 
+                 className="h-full border-b-4 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent rounded-none px-2 font-black uppercase tracking-widest text-[10px] text-neutral-400 data-[state=active]:text-indigo-950 dark:data-[state=active]:text-white transition-all gap-2"
+               >
+                 <FileText className="h-4 w-4 mb-0.5" /> Invoices
+               </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="overview" className="space-y-10 outline-none">
+            {/* KPI Top Row */}
+            {summary ? (
+              <SalesKpiCards summary={summary} isLoading={isLoading} />
+            ) : (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              <SalesKpiCards summary={{} as any} isLoading={true} />
+            )}
+
+            {/* Middle Row: Charts & Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-4">
+              <div className="lg:col-span-2 xl:col-span-2">
+                <RevenueTrendChart data={trendData} isLoading={isLoading} />
+              </div>
+              <div className="lg:col-span-1 xl:col-span-1">
+                <SalesByStatusPie data={pieData} isLoading={isLoading} />
+              </div>
+              <div className="lg:col-span-3 xl:col-span-1 h-full">
+                <SalesAnalyticsPanel />
+              </div>
+            </div>
+
+            <div className="space-y-6 pt-4">
+               <div className="flex items-center gap-3 mb-6">
+                  <div className="h-1 w-12 bg-indigo-600 rounded-full" />
+                  <h2 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Recent Transactions</h2>
+               </div>
+               {/* Filter Bar */}
+               <SalesFiltersBar currentStatus={statusFilter} onSearch={setStatusFilter} />
+
+               {/* Advanced DataTable */}
+               <DataTable 
+                 columns={columns} 
+                 data={sales} 
+                 searchKey="customerName" 
+                 searchPlaceholder="Find in local table..." 
+               />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="invoices" className="outline-none">
+             <div className="bg-white dark:bg-neutral-900 rounded-[2rem] border border-neutral-100 dark:border-neutral-800 shadow-sm p-10 text-center space-y-4">
+                <FileText className="h-12 w-12 text-neutral-200 mx-auto" />
+                <h3 className="text-lg font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Invoice Management</h3>
+                <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest italic">Detailed invoice view and management is under construction.</p>
+             </div>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* KPI Top Row */}
-      {summary ? (
-        <SalesKpiCards summary={summary} isLoading={isLoading} />
-      ) : (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        <SalesKpiCards summary={{} as any} isLoading={true} />
-      )}
-
-      {/* Middle Row: Charts & Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div className="lg:col-span-2 xl:col-span-2">
-          <RevenueTrendChart data={trendData} isLoading={isLoading} />
-        </div>
-        <div className="lg:col-span-1 xl:col-span-1">
-          <SalesByStatusPie data={pieData} isLoading={isLoading} />
-        </div>
-        <div className="lg:col-span-3 xl:col-span-1 h-full">
-          <SalesAnalyticsPanel />
-        </div>
-      </div>
-
-      {/* Filter Bar */}
-      <SalesFiltersBar currentStatus={statusFilter} onSearch={setStatusFilter} />
-
-      {/* Advanced DataTable */}
-      <DataTable 
-        columns={columns} 
-        data={sales} 
-        searchKey="customerName" 
-        searchPlaceholder="Find in local table..." 
-      />
-    </div>
+    </ProtectedRoute>
   );
 }
