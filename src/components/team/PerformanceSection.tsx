@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { MOCK_PERFORMANCE } from '@/lib/mock-team';
 
-const Progress = ({ value, className }: { value: number, className?: string }) => (
+export const Progress = ({ value, className }: { value: number, className?: string }) => (
   <div className={`h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden ${className}`}>
     <div className="h-full bg-indigo-600 transition-all" style={{ width: `${value}%` }} />
   </div>
