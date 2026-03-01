@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Tenant (Company)
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  products  Product[]
+}
+
+// User (Admin, Accountant, Staff)
+model User {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  name      String
+  email     String
+  password  String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email, tenantId])
+}
+
+// Product (Inventory)
+model Product {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  name        String
+  sku         String
+  description String?
+  imageUrl    String?
+  category    String
+  unit        String        // e.g. "piece", "kg", "hr"
+
+  price       Float
+  costPrice   Float?
+  taxRate     Float   @default(0)  // percentage e.g. 18.0
+
+  stock       Int     @default(0)
+  lowStockAlert Int   @default(5)
+
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([sku, tenantId])
+}
+
+enum Role {
+  ADMIN
+  ACCOUNTANT
+  STAFF
+}
