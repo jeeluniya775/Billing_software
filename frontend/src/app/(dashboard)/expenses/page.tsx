@@ -10,7 +10,6 @@ import { MonthlyBurnChart } from '@/components/expenses/MonthlyBurnChart';
 import { ExpenseAnalyticsPanel } from '@/components/expenses/ExpenseAnalyticsPanel';
 import { AddExpenseModal } from '@/components/expenses/AddExpenseModal';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -137,57 +136,6 @@ export default function ExpensesPage() {
   const hasActiveFilters = search || statusFilter !== 'all' || categoryFilter !== 'all' || methodFilter !== 'all' || dateFrom || dateTo;
 
   return (
-<<<<<<< HEAD:frontend/src/app/(dashboard)/expenses/page.tsx
-    <div className="space-y-6">
-      <PageHeader 
-        title="Expenses"
-        subtitle="Track, categorize, and manage all business expenses."
-        actions={
-          <>
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowAnalytics(v => !v)}>
-              <BarChart3 className="h-4 w-4" />
-              {showAnalytics ? 'Hide Analytics' : 'Analytics'}
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" /> Export
-            </Button>
-            <AddExpenseModal onExpenseAdded={handleRefresh} />
-          </>
-        }
-      />
-
-      {/* KPIs */}
-      <ExpenseKpiCards summary={summary || MOCK_EXPENSE_SUMMARY} />
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MonthlyBurnChart data={MOCK_EXPENSE_ANALYTICS.monthlyTrend} />
-        <ExpenseCategoryChart data={MOCK_EXPENSE_ANALYTICS.categoryDistribution} />
-      </div>
-
-      {/* Analytics Panel */}
-      {showAnalytics && (
-        <div className="space-y-4">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-emerald-600" /> Expense Analytics
-          </h2>
-          <ExpenseAnalyticsPanel analytics={MOCK_EXPENSE_ANALYTICS} />
-        </div>
-      )}
-
-      {/* Advanced Table */}
-      <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700">
-        {/* Table Header */}
-        <div className="p-4 border-b border-neutral-100 dark:border-neutral-700 flex flex-col md:flex-row gap-3 md:items-center">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-            <Input
-              placeholder="Search vendor, category, ID..."
-              className="pl-9 h-9 text-sm"
-              value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); }}
-            />
-=======
     <ProtectedRoute>
       <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
         {/* Page Header */}
@@ -202,7 +150,6 @@ export default function ExpensesPage() {
             <p className="text-xs font-bold text-neutral-400 uppercase tracking-[0.2em] italic ml-1.5 flex items-center gap-2">
                Track, categorize, and manage all business expenses <Sparkles className="h-3 w-3 text-indigo-400" />
             </p>
->>>>>>> origin/main:src/app/(dashboard)/expenses/page.tsx
           </div>
           
           <div className="flex gap-3">
@@ -242,7 +189,7 @@ export default function ExpensesPage() {
 
           <TabsContent value="overview" className="space-y-10 outline-none">
             {/* KPIs */}
-            <ExpenseKpiCards summary={MOCK_EXPENSE_SUMMARY} />
+            <ExpenseKpiCards summary={summary || MOCK_EXPENSE_SUMMARY} isLoading={isLoading} />
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
@@ -304,7 +251,7 @@ export default function ExpensesPage() {
                         {['Paid', 'Pending', 'Reimbursable', 'Approved', 'Rejected'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    {/* ... other selects ... */}
+                    
                     <Select value={categoryFilter} onValueChange={v => { setCategoryFilter(v); setPage(1); }}>
                       <SelectTrigger className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-xl border-neutral-100 bg-neutral-50"><SelectValue placeholder="Category" /></SelectTrigger>
                       <SelectContent>
@@ -312,6 +259,7 @@ export default function ExpensesPage() {
                         {EXPENSE_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    
                     <Select value={methodFilter} onValueChange={v => { setMethodFilter(v); setPage(1); }}>
                       <SelectTrigger className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-xl border-neutral-100 bg-neutral-50"><SelectValue placeholder="Payment" /></SelectTrigger>
                       <SelectContent>
@@ -319,6 +267,7 @@ export default function ExpensesPage() {
                         {PAYMENT_METHODS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    
                     <Input type="date" className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-xl border-neutral-100 bg-neutral-50" placeholder="From" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
                     <Input type="date" className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-xl border-neutral-100 bg-neutral-50" placeholder="To" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} />
                   </div>

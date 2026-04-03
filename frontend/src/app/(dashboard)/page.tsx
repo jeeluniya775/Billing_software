@@ -5,16 +5,11 @@ import { useAuthStore } from '@/store/auth.store';
 import { RevenueChart } from '@/components/charts/RevenueChart';
 import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { ProfitLossChart } from '@/components/charts/ProfitLossChart';
-import { mockData } from '@/lib/mock-data';
 import { AddExpenseModal } from '@/components/forms/AddExpenseModal';
 import { CreateInvoiceModal } from '@/components/forms/CreateInvoiceModal';
-<<<<<<< HEAD:frontend/src/app/(dashboard)/page.tsx
 import { salesService } from '@/services/sales.service';
 import { accountingService } from '@/services/accounting.service';
-import { PageHeader } from '@/components/layout/PageHeader';
-=======
 import { Button } from '@/components/ui/button';
->>>>>>> origin/main:src/app/(dashboard)/page.tsx
 
 // Icons
 import {
@@ -31,7 +26,6 @@ import {
   Calculator,
   Sparkles,
   RefreshCw,
-  LayoutDashboard,
   FileDigit
 } from 'lucide-react';
 
@@ -41,24 +35,26 @@ export default function Dashboard() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [invList, accList] = await Promise.all([
-          salesService.getSales(),
-          accountingService.getAccounts()
-        ]);
-        setInvoices(Array.isArray(invList) ? invList : []);
-        setAccounts(Array.isArray(accList) ? accList : []);
-      } catch (err) {
-        console.error('Dashboard load failed', err);
-        setInvoices([]);
-        setAccounts([]);
-      } finally {
-        setIsLoading(false);
-      }
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [invList, accList] = await Promise.all([
+        salesService.getSales(),
+        accountingService.getAccounts()
+      ]);
+      setInvoices(Array.isArray(invList) ? invList : []);
+      setAccounts(Array.isArray(accList) ? accList : []);
+    } catch (err) {
+      console.error('Dashboard load failed', err);
+      setInvoices([]);
+      setAccounts([]);
+    } finally {
+      setIsLoading(false);
     }
-    load();
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   const stats = {
@@ -77,19 +73,6 @@ export default function Dashboard() {
   };
 
   return (
-<<<<<<< HEAD:frontend/src/app/(dashboard)/page.tsx
-    <div className="space-y-6 pb-8">
-      <PageHeader 
-        title={`${greeting()}, ${user?.name || 'User'}`}
-        subtitle="Here's what's happening with your business today."
-        actions={
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Live Monitoring</span>
-          </div>
-        }
-      />
-=======
     <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
       {/* 1. Greeting */}
       <div className="space-y-2">
@@ -100,7 +83,6 @@ export default function Dashboard() {
           Here&apos;s what&apos;s happening with your business today <Sparkles className="h-3 w-3 text-indigo-400" />
         </p>
       </div>
->>>>>>> origin/main:src/app/(dashboard)/page.tsx
 
       {/* 2. Business Feed Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -155,18 +137,18 @@ export default function Dashboard() {
         <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
           <CreditCard className="h-4 w-4" /> Get Paid Online
         </Button>
-        <CreateInvoiceModal />
+        <CreateInvoiceModal onSuccess={loadData} />
         <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
           <FileDigit className="h-4 w-4" /> Create Check
         </Button>
         <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
           <Download className="h-4 w-4" /> Add Bank Deposit
         </Button>
-        <AddExpenseModal />
+        <AddExpenseModal onExpenseAdded={loadData} />
       </div>
 
       {/* 4. Two Column Layout */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Sales & Get Paid Funnel */}
         <div className="lg:col-span-2 bg-white dark:bg-neutral-900 rounded-[2rem] shadow-sm border border-neutral-100 dark:border-neutral-800 p-10 overflow-hidden">
           <div className="flex justify-between items-center mb-8">
@@ -223,38 +205,23 @@ export default function Dashboard() {
                </div>
                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest ml-15">Real-time banking data</p>
             </div>
-            <Button variant="ghost" className="h-8 w-8 p-0 rounded-xl">
+            <Button variant="ghost" className="h-8 w-8 p-0 rounded-xl" onClick={loadData}>
                <RefreshCw className="h-4 w-4 text-neutral-300" />
             </Button>
           </div>
           
-<<<<<<< HEAD:frontend/src/app/(dashboard)/page.tsx
-          <div className="mb-6">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Balance</p>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
+          <div className="mb-10">
+            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">Total Net Position</p>
+            <h3 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">
               ${stats.bankTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </h3>
           </div>
 
-          <div className="space-y-4 flex-1">
-            {accounts.filter(a => a.type === 'ASSET').slice(0, 4).map((account) => (
-              <div key={account.id} className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-neutral-700 last:border-0 last:pb-0">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{account.name}</span>
-                <span className={`text-sm font-semibold ${account.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
-=======
-          <div className="mb-10">
-            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">Total Net Position</p>
-            <h3 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">
-              ${mockData.bankAccounts.reduce((acc, account) => acc + account.balance, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </h3>
-          </div>
-
           <div className="space-y-6 flex-1">
-            {mockData.bankAccounts.map((account) => (
+            {accounts.filter(a => a.type === 'ASSET').slice(0, 4).map((account) => (
               <div key={account.id} className="flex justify-between items-center pb-6 border-b border-neutral-50 dark:border-neutral-800 last:border-0 last:pb-0">
-                <span className="text-[11px] font-black text-neutral-500 uppercase tracking-widest truncate max-w-[140px]">{account.name}</span>
+                <span className="text-[11px] font-black text-neutral-500 uppercase tracking-widest truncate max-w-[140px] font-mono">{account.name}</span>
                 <span className={`text-[13px] font-black tracking-tighter ${account.balance < 0 ? 'text-rose-600' : 'text-indigo-950 dark:text-white'}`}>
->>>>>>> origin/main:src/app/(dashboard)/page.tsx
                   ${Math.abs(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -301,29 +268,5 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Custom icon for DocumentText since it's not in standard lucide-react exports
-function DocumentText(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <polyline points="10 9 9 9 8 9" />
-    </svg>
   );
 }

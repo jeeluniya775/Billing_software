@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { 
-  Megaphone, Users, Zap, PieChart, Target, 
-  Settings2, Download, Filter, Search, Plus,
-  TrendingUp, BarChart3, Mail, MessageSquare, Layout, Sparkles, LayoutDashboard
+  Megaphone, Users, Zap, Target, 
+  Download, Plus,
+  BarChart3, Sparkles, LayoutDashboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { MarketingKpiCards } from '@/components/marketing/MarketingKpiCards';
@@ -52,43 +51,6 @@ export default function MarketingPage() {
   }, []);
 
   return (
-<<<<<<< HEAD:frontend/src/app/(dashboard)/marketing/page.tsx
-    <div className="space-y-6">
-      <PageHeader 
-        title="Marketing Intelligence"
-        subtitle="Manage campaigns, track leads, and optimize ROI."
-        actions={
-          <>
-            <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
-              <Download className="h-4 w-4" /> Reports
-            </Button>
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-9 text-xs">
-              <Plus className="h-4 w-4" /> Launch Campaign
-            </Button>
-          </>
-        }
-      />
-
-      <Tabs defaultValue="overview" className="space-y-6">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="overview">Dashboard</TabsTrigger>
-            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-            <TabsTrigger value="leads">Leads</TabsTrigger>
-            <TabsTrigger value="automation">Automation</TabsTrigger>
-            <TabsTrigger value="audience">Audience</TabsTrigger>
-            <TabsTrigger value="analytics">Performance</TabsTrigger>
-          </TabsList>
-
-          <div className="hidden lg:flex items-center gap-3 px-4 ml-4">
-             <div className="flex flex-col items-end">
-               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest leading-none">Global Status</span>
-               <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 mt-1">
-                 <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                 All Systems Live
-               </span>
-             </div>
-=======
     <ProtectedRoute>
       <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
         {/* Page Header */}
@@ -112,7 +74,6 @@ export default function MarketingPage() {
             <Button className="h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 shadow-xl px-6 transition-all active:scale-95">
                 <Plus className="h-4 w-4" /> Launch Campaign
             </Button>
->>>>>>> origin/main:src/app/(dashboard)/marketing/page.tsx
           </div>
         </div>
 

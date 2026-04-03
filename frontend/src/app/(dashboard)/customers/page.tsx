@@ -20,15 +20,10 @@ import {
 import { DataTable } from '@/components/tables/DataTable';
 import { AddCustomerModal } from '@/components/forms/AddCustomerModal';
 import { useState, useEffect } from 'react';
-import { customersService, Customer as ApiCustomer } from '@/services/customers.service';
+import { customersService } from '@/services/customers.service';
 import { Customer } from '@/types/customer';
-<<<<<<< HEAD:frontend/src/app/(dashboard)/customers/page.tsx
-import { PageHeader } from '@/components/layout/PageHeader';
-=======
-import { MOCK_CUSTOMERS } from '@/lib/mock-customers';
 import { Badge } from '@/components/ui/badge';
 import { CustomerKpiCards } from '@/components/customers/CustomerKpiCards';
->>>>>>> origin/main:src/app/(dashboard)/customers/page.tsx
 
 const getTagColor = (tag: string) => {
   switch (tag) {
@@ -63,15 +58,9 @@ const columns = [
       const status = row.original.status || 'ACTIVE';
       return (
         <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase ${
-<<<<<<< HEAD:frontend/src/app/(dashboard)/customers/page.tsx
           status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' 
           : status === 'BLOCKED' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
           : status === 'ON_HOLD' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-=======
-          status === 'Active' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
-          : status === 'Blocked' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-          : status === 'On Hold' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
->>>>>>> origin/main:src/app/(dashboard)/customers/page.tsx
           : 'bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-400'
         }`}>
           {status}
@@ -169,52 +158,30 @@ const columns = [
 ];
 
 export default function CustomersPage() {
-<<<<<<< HEAD:frontend/src/app/(dashboard)/customers/page.tsx
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadCustomers() {
-      setIsLoading(true);
-      try {
-        const data = await customersService.getCustomers();
-        setCustomers(Array.isArray(data) ? data as unknown as Customer[] : []);
-      } catch (err) {
-        console.error("Failed to fetch customers:", err);
-        setCustomers([]);
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchCustomers = async () => {
+    setIsLoading(true);
+    try {
+      const data = await customersService.getCustomers();
+      setCustomers(Array.isArray(data) ? data as unknown as Customer[] : []);
+    } catch (err) {
+      console.error("Failed to fetch customers:", err);
+      setCustomers([]);
+    } finally {
+      setIsLoading(false);
     }
-    loadCustomers();
+  };
+
+  useEffect(() => {
+    fetchCustomers();
   }, []);
 
   const totalBalance = (customers || []).reduce((acc, curr) => acc + (curr.currentBalance || 0), 0);
   const activeCount = (customers || []).filter(c => c.status === 'ACTIVE').length;
   const highRiskCount = (customers || []).filter(c => ((c as any).tags || []).includes('High Risk') || c.status === 'BLOCKED').length;
-
-  return (
-    <div className="space-y-6">
-      <PageHeader 
-        title="Customers"
-        subtitle="Manage your comprehensive client CRM and track financial ledgers."
-        actions={
-          <AddCustomerModal onSuccess={() => {
-            customersService.getCustomers().then(data => setCustomers(Array.isArray(data) ? data as unknown as Customer[] : []));
-          }} />
-        }
-      />
-=======
-  const totalBalance = MOCK_CUSTOMERS.reduce((acc, curr) => acc + curr.currentBalance, 0);
-  const activeCount = MOCK_CUSTOMERS.filter(c => c.status === 'Active').length;
-  const highRiskCount = MOCK_CUSTOMERS.filter(c => c.tags.includes('High Risk') || c.status === 'Blocked').length;
-  const totalCustomers = MOCK_CUSTOMERS.length;
-
-  // Placeholder for handleRefresh, assuming it would trigger a data refetch
-  const handleRefresh = () => {
-    console.log("Customer data refreshed!");
-    // In a real app, you'd refetch data here, e.g., using SWR or React Query
-  };
+  const totalCustomers = customers.length;
 
   return (
     <ProtectedRoute>
@@ -237,10 +204,9 @@ export default function CustomersPage() {
             <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
                 <Download className="h-4 w-4" /> Export DB
             </Button>
-            <AddCustomerModal onCustomerAdded={handleRefresh} />
+            <AddCustomerModal onSuccess={fetchCustomers} />
           </div>
         </div>
->>>>>>> origin/main:src/app/(dashboard)/customers/page.tsx
 
         <Tabs defaultValue="overview" className="space-y-10">
           <div className="border-b border-neutral-100 dark:border-neutral-800 sticky top-0 bg-neutral-50/80 dark:bg-neutral-900/80 backdrop-blur-xl z-30 -mx-4 md:-mx-8 px-4 md:px-8">
@@ -259,40 +225,6 @@ export default function CustomersPage() {
                </TabsTrigger>
             </TabsList>
           </div>
-<<<<<<< HEAD:frontend/src/app/(dashboard)/customers/page.tsx
-          <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-            ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Customers</h3>
-            <span className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg"><UsersIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" /></span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{customers.length}</div>
-        </div>
-        
-        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Active Contacts</h3>
-            <span className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg"><UsersIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /></span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{activeCount}</div>
-        </div>
-        
-        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400">At Risk / Blocked</h3>
-            <span className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg"><ShieldAlert className="h-4 w-4 text-red-600 dark:text-red-400" /></span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{highRiskCount}</div>
-        </div>
-      </div>
-
-      <DataTable columns={columns} data={customers} searchKey="name" searchPlaceholder="Search by customer name..." isLoading={isLoading} />
-    </div>
-=======
 
           <TabsContent value="overview" className="space-y-10 outline-none">
             {/* KPI Cards */}
@@ -312,9 +244,10 @@ export default function CustomersPage() {
                {/* Advanced DataTable */}
                <DataTable 
                  columns={columns} 
-                 data={MOCK_CUSTOMERS} 
+                 data={customers} 
                  searchKey="name" 
                  searchPlaceholder="Search customers..." 
+                 isLoading={isLoading}
                />
             </div>
           </TabsContent>
@@ -329,6 +262,5 @@ export default function CustomersPage() {
         </Tabs>
       </div>
     </ProtectedRoute>
->>>>>>> origin/main:src/app/(dashboard)/customers/page.tsx
   );
 }

@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { customersService } from '@/services/customers.service';
 
 const customerSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -47,21 +48,13 @@ const customerSchema = z.object({
   country: z.string().default('USA'),
 });
 
-<<<<<<< HEAD:frontend/src/components/forms/AddCustomerModal.tsx
-import { customersService } from '@/services/customers.service';
-
 interface AddCustomerModalProps {
   onSuccess?: () => void;
-}
-
-export function AddCustomerModal({ onSuccess }: AddCustomerModalProps) {
-=======
-interface AddCustomerModalProps {
+  // Support both for compatibility during transition
   onCustomerAdded?: () => void;
 }
 
-export function AddCustomerModal({ onCustomerAdded }: AddCustomerModalProps) {
->>>>>>> origin/main:src/components/forms/AddCustomerModal.tsx
+export function AddCustomerModal({ onSuccess, onCustomerAdded }: AddCustomerModalProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
@@ -84,7 +77,6 @@ export function AddCustomerModal({ onCustomerAdded }: AddCustomerModalProps) {
     },
   });
 
-<<<<<<< HEAD:frontend/src/components/forms/AddCustomerModal.tsx
   async function onSubmit(values: z.infer<typeof customerSchema>) {
     try {
       // Map form values to API structure
@@ -111,6 +103,7 @@ export function AddCustomerModal({ onCustomerAdded }: AddCustomerModalProps) {
       setOpen(false);
       form.reset();
       if (onSuccess) onSuccess();
+      if (onCustomerAdded) onCustomerAdded();
     } catch (error) {
       toast({
         title: 'Error',
@@ -118,17 +111,6 @@ export function AddCustomerModal({ onCustomerAdded }: AddCustomerModalProps) {
         variant: 'destructive',
       });
     }
-=======
-  function onSubmit(values: z.infer<typeof customerSchema>) {
-    toast({
-      title: 'Customer Created',
-      description: `${values.company} (${values.name}) has been saved. Credit limit set to $${values.creditLimit.toLocaleString()}.`,
-      variant: 'default',
-    });
-    setOpen(false);
-    form.reset();
-    if (onCustomerAdded) onCustomerAdded();
->>>>>>> origin/main:src/components/forms/AddCustomerModal.tsx
   }
 
   return (
@@ -147,7 +129,6 @@ export function AddCustomerModal({ onCustomerAdded }: AddCustomerModalProps) {
         </DialogHeader>
         
         <Form {...form}>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6 pt-2">
             
             {/* General Info */}
