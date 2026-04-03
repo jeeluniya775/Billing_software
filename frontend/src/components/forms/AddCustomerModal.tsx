@@ -47,6 +47,7 @@ const customerSchema = z.object({
   country: z.string().default('USA'),
 });
 
+<<<<<<< HEAD:frontend/src/components/forms/AddCustomerModal.tsx
 import { customersService } from '@/services/customers.service';
 
 interface AddCustomerModalProps {
@@ -54,6 +55,13 @@ interface AddCustomerModalProps {
 }
 
 export function AddCustomerModal({ onSuccess }: AddCustomerModalProps) {
+=======
+interface AddCustomerModalProps {
+  onCustomerAdded?: () => void;
+}
+
+export function AddCustomerModal({ onCustomerAdded }: AddCustomerModalProps) {
+>>>>>>> origin/main:src/components/forms/AddCustomerModal.tsx
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
@@ -76,6 +84,7 @@ export function AddCustomerModal({ onSuccess }: AddCustomerModalProps) {
     },
   });
 
+<<<<<<< HEAD:frontend/src/components/forms/AddCustomerModal.tsx
   async function onSubmit(values: z.infer<typeof customerSchema>) {
     try {
       // Map form values to API structure
@@ -109,13 +118,24 @@ export function AddCustomerModal({ onSuccess }: AddCustomerModalProps) {
         variant: 'destructive',
       });
     }
+=======
+  function onSubmit(values: z.infer<typeof customerSchema>) {
+    toast({
+      title: 'Customer Created',
+      description: `${values.company} (${values.name}) has been saved. Credit limit set to $${values.creditLimit.toLocaleString()}.`,
+      variant: 'default',
+    });
+    setOpen(false);
+    form.reset();
+    if (onCustomerAdded) onCustomerAdded();
+>>>>>>> origin/main:src/components/forms/AddCustomerModal.tsx
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-          <Plus className="mr-2 h-4 w-4" /> Add Customer
+        <Button className="h-12 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] gap-2 shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02]">
+          <Plus className="h-4 w-4" /> Add Customer
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">

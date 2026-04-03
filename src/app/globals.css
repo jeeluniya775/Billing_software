@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+ 
+    --primary: 142 71% 45%; /* Emerald 600 */
+    --primary-foreground: 0 0% 98%;
+ 
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+ 
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+ 
+    --accent: 220 14% 96%;
+    --accent-foreground: 224 71% 4%;
+ 
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 142 71% 45%;
+ 
+    --radius: 0.75rem; /* rounded-xl */
+    --chart-1: 142 71% 45%;
+    --chart-2: 243 75% 59%;
+    --chart-3: 199 89% 48%;
+    --chart-4: 47 95% 50%;
+    --chart-5: 27 87% 67%;
+  }
+ 
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 20% 98%;
+ 
+    --card: 224 71% 4%;
+    --card-foreground: 210 20% 98%;
+ 
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 20% 98%;
+ 
+    --primary: 142 71% 45%;
+    --primary-foreground: 0 0% 98%;
+ 
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 20% 98%;
+ 
+    --muted: 215 28% 17%;
+    --muted-foreground: 218 11% 65%;
+ 
+    --accent: 215 28% 17%;
+    --accent-foreground: 210 20% 98%;
+ 
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 20% 98%;
+ 
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 142 71% 45%;
+    --chart-1: 142 71% 45%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 31 97% 55%;
+    --chart-4: 281 83% 66%;
+    --chart-5: 341 81% 61%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Custom Utilities based on Next.js setup */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

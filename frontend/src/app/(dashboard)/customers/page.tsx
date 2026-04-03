@@ -1,7 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { DollarSign, MoreHorizontal, Copy, Pencil, Trash2, Eye, ShieldAlert, Users as UsersIcon } from 'lucide-react';
+import {
+  MoreHorizontal, Phone, Mail, MapPin, Calendar, CheckCircle2, XCircle, Search,
+  Download, Filter, ArrowUpDown, ChevronDown, User, Users2, Sparkles, LayoutDashboard,
+  DollarSign, Copy, Pencil, Trash2, Eye, ShieldAlert, Users as UsersIcon
+} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,7 +22,13 @@ import { AddCustomerModal } from '@/components/forms/AddCustomerModal';
 import { useState, useEffect } from 'react';
 import { customersService, Customer as ApiCustomer } from '@/services/customers.service';
 import { Customer } from '@/types/customer';
+<<<<<<< HEAD:frontend/src/app/(dashboard)/customers/page.tsx
 import { PageHeader } from '@/components/layout/PageHeader';
+=======
+import { MOCK_CUSTOMERS } from '@/lib/mock-customers';
+import { Badge } from '@/components/ui/badge';
+import { CustomerKpiCards } from '@/components/customers/CustomerKpiCards';
+>>>>>>> origin/main:src/app/(dashboard)/customers/page.tsx
 
 const getTagColor = (tag: string) => {
   switch (tag) {
@@ -51,9 +63,15 @@ const columns = [
       const status = row.original.status || 'ACTIVE';
       return (
         <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase ${
+<<<<<<< HEAD:frontend/src/app/(dashboard)/customers/page.tsx
           status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' 
           : status === 'BLOCKED' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
           : status === 'ON_HOLD' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+=======
+          status === 'Active' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+          : status === 'Blocked' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+          : status === 'On Hold' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+>>>>>>> origin/main:src/app/(dashboard)/customers/page.tsx
           : 'bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-400'
         }`}>
           {status}
@@ -84,12 +102,12 @@ const columns = [
       const amount = row.original.currentBalance || 0;
       const limit = row.original.creditLimit || 0;
       const overLimit = amount > limit;
-      
+
       const formatted = new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: row.original.currency === 'GBP' ? 'GBP' : 'USD',
       }).format(amount);
-      
+
       return (
         <div className="flex flex-col items-end">
           <span className={`font-medium ${overLimit ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
@@ -108,9 +126,9 @@ const columns = [
       return (
         <div className="flex items-center justify-center gap-2">
           <div className="w-16 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-            <div 
-              className={`h-full rounded-full ${score > 80 ? 'bg-emerald-500' : score > 50 ? 'bg-amber-500' : 'bg-red-500'}`} 
-              style={{ width: `${Math.min(100, Math.max(0, score))}%` }} 
+            <div
+              className={`h-full rounded-full ${score > 80 ? 'bg-emerald-500' : score > 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+              style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
             />
           </div>
           <span className="text-xs font-mono text-neutral-500">{score}</span>
@@ -151,6 +169,7 @@ const columns = [
 ];
 
 export default function CustomersPage() {
+<<<<<<< HEAD:frontend/src/app/(dashboard)/customers/page.tsx
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -185,13 +204,62 @@ export default function CustomersPage() {
           }} />
         }
       />
+=======
+  const totalBalance = MOCK_CUSTOMERS.reduce((acc, curr) => acc + curr.currentBalance, 0);
+  const activeCount = MOCK_CUSTOMERS.filter(c => c.status === 'Active').length;
+  const highRiskCount = MOCK_CUSTOMERS.filter(c => c.tags.includes('High Risk') || c.status === 'Blocked').length;
+  const totalCustomers = MOCK_CUSTOMERS.length;
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total A/R Balance</h3>
-            <span className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg"><DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /></span>
+  // Placeholder for handleRefresh, assuming it would trigger a data refetch
+  const handleRefresh = () => {
+    console.log("Customer data refreshed!");
+    // In a real app, you'd refetch data here, e.g., using SWR or React Query
+  };
+
+  return (
+    <ProtectedRoute>
+      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+               <div className="h-10 w-10 bg-indigo-950 dark:bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                  <Users2 className="h-6 w-6" />
+               </div>
+               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Customers</h1>
+            </div>
+            <p className="text-xs font-bold text-neutral-400 uppercase tracking-[0.2em] italic ml-1.5 flex items-center gap-2">
+               Manage client relationships and communication history <Sparkles className="h-3 w-3 text-indigo-400" />
+            </p>
           </div>
+          
+          <div className="flex gap-3">
+            <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
+                <Download className="h-4 w-4" /> Export DB
+            </Button>
+            <AddCustomerModal onCustomerAdded={handleRefresh} />
+          </div>
+        </div>
+>>>>>>> origin/main:src/app/(dashboard)/customers/page.tsx
+
+        <Tabs defaultValue="overview" className="space-y-10">
+          <div className="border-b border-neutral-100 dark:border-neutral-800 sticky top-0 bg-neutral-50/80 dark:bg-neutral-900/80 backdrop-blur-xl z-30 -mx-4 md:-mx-8 px-4 md:px-8">
+            <TabsList className="h-16 bg-transparent gap-8 p-0">
+               <TabsTrigger 
+                 value="overview" 
+                 className="h-full border-b-4 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent rounded-none px-2 font-black uppercase tracking-widest text-[10px] text-neutral-400 data-[state=active]:text-indigo-950 dark:data-[state=active]:text-white transition-all gap-2"
+               >
+                 <LayoutDashboard className="h-4 w-4 mb-0.5" /> Overview
+               </TabsTrigger>
+               <TabsTrigger 
+                 value="groups" 
+                 className="h-full border-b-4 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent rounded-none px-2 font-black uppercase tracking-widest text-[10px] text-neutral-400 data-[state=active]:text-indigo-950 dark:data-[state=active]:text-white transition-all gap-2"
+               >
+                 <Users2 className="h-4 w-4 mb-0.5" /> Groups
+               </TabsTrigger>
+            </TabsList>
+          </div>
+<<<<<<< HEAD:frontend/src/app/(dashboard)/customers/page.tsx
           <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
             ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
@@ -224,5 +292,43 @@ export default function CustomersPage() {
 
       <DataTable columns={columns} data={customers} searchKey="name" searchPlaceholder="Search by customer name..." isLoading={isLoading} />
     </div>
+=======
+
+          <TabsContent value="overview" className="space-y-10 outline-none">
+            {/* KPI Cards */}
+            <CustomerKpiCards 
+              totalBalance={totalBalance}
+              totalCustomers={totalCustomers}
+              activeCount={activeCount}
+              highRiskCount={highRiskCount}
+            />
+
+            <div className="space-y-6 pt-4">
+               <div className="flex items-center gap-3 mb-6">
+                  <div className="h-1 w-12 bg-indigo-600 rounded-full" />
+                  <h2 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Customer Directory</h2>
+               </div>
+               
+               {/* Advanced DataTable */}
+               <DataTable 
+                 columns={columns} 
+                 data={MOCK_CUSTOMERS} 
+                 searchKey="name" 
+                 searchPlaceholder="Search customers..." 
+               />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="groups" className="outline-none">
+             <div className="bg-white dark:bg-neutral-900 rounded-[2rem] border border-neutral-100 dark:border-neutral-800 shadow-sm p-20 text-center space-y-6">
+                <Users2 className="h-12 w-12 text-neutral-200 mx-auto" />
+                <h3 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Customer Segmentation</h3>
+                <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest italic leading-relaxed max-w-sm mx-auto">Dynamic grouping and mailing list management is being integrated.</p>
+             </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ProtectedRoute>
+>>>>>>> origin/main:src/app/(dashboard)/customers/page.tsx
   );
 }
