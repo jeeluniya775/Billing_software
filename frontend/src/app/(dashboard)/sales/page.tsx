@@ -13,12 +13,8 @@ import { salesService } from '@/services/sales.service';
 import Link from 'next/link';
 import { MoreHorizontal, FileText, CheckCircle2, Mail, Send, ShoppingCart, Sparkles, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-<<<<<<< HEAD:frontend/src/app/(dashboard)/sales/page.tsx
-import { PageHeader } from '@/components/layout/PageHeader';
-=======
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
->>>>>>> origin/main:src/app/(dashboard)/sales/page.tsx
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -171,47 +167,6 @@ export default function SalesPage() {
   }, [statusFilter]);
 
   return (
-<<<<<<< HEAD:frontend/src/app/(dashboard)/sales/page.tsx
-    <div className="space-y-6">
-      <PageHeader 
-        title="Sales & Revenue"
-        subtitle="Comprehensive dashboard for managing invoices and revenue tracking."
-        actions={<AddSaleModal />}
-      />
-
-      {/* KPI Top Row */}
-      {summary ? (
-        <SalesKpiCards summary={summary} isLoading={isLoading} />
-      ) : (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        <SalesKpiCards summary={{} as any} isLoading={true} />
-      )}
-
-      {/* Middle Row: Charts & Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div className="lg:col-span-2 xl:col-span-2">
-          <RevenueTrendChart data={trendData} isLoading={isLoading} />
-        </div>
-        <div className="lg:col-span-1 xl:col-span-1">
-          <SalesByStatusPie data={pieData} isLoading={isLoading} />
-        </div>
-        <div className="lg:col-span-3 xl:col-span-1 h-full">
-          <SalesAnalyticsPanel />
-        </div>
-      </div>
-
-      {/* Filter Bar */}
-      <SalesFiltersBar currentStatus={statusFilter} onSearch={setStatusFilter} />
-
-      {/* Advanced DataTable */}
-      <DataTable 
-        columns={columns} 
-        data={sales} 
-        searchKey="customerName" 
-        searchPlaceholder="Find in local table..." 
-      />
-    </div>
-=======
     <ProtectedRoute>
       <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
         {/* Header Section */}
@@ -287,6 +242,7 @@ export default function SalesPage() {
                  data={sales} 
                  searchKey="customerName" 
                  searchPlaceholder="Find in local table..." 
+                 isLoading={isLoading}
                />
             </div>
           </TabsContent>
@@ -301,6 +257,5 @@ export default function SalesPage() {
         </Tabs>
       </div>
     </ProtectedRoute>
->>>>>>> origin/main:src/app/(dashboard)/sales/page.tsx
   );
 }

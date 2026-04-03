@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  Clock, Calendar, Briefcase, UserCheck, 
-  Settings, Download, Plus, Filter, Search,
-  ChevronRight, Timer, History, BarChart3, Lock, Sparkles
+  Clock, Briefcase, UserCheck, 
+  Download, Plus,
+  ChevronRight, Timer, History, BarChart3, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TimeKpiCards } from '@/components/time/TimeKpiCards';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { TimeCharts } from '@/components/time/TimeCharts';
 import { TimeEntryTable } from '@/components/time/TimeEntryTable';
 import { TimesheetView } from '@/components/time/TimesheetView';
@@ -40,34 +39,6 @@ export default function TimeTrackingPage() {
 
   return (
     <ProtectedRoute>
-<<<<<<< HEAD:frontend/src/app/(dashboard)/time/page.tsx
-      <div className="space-y-6">
-        <PageHeader 
-          title="Time & Attendance"
-          subtitle="Track project hours, manage timesheets, and monitor team productivity."
-          actions={
-            <>
-              <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
-                <Download className="h-4 w-4" /> Export Logs
-              </Button>
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-9 text-xs">
-                <Plus className="h-4 w-4" /> New Entry
-              </Button>
-            </>
-          }
-        />
-
-        {summary && <TimeKpiCards summary={summary} isLoading={isLoading} />}
-
-        <Tabs defaultValue="overview" className="space-y-8">
-           <div className="flex items-center justify-between">
-              <TabsList className="h-10">
-                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                 <TabsTrigger value="entries">Time Entries</TabsTrigger>
-                 <TabsTrigger value="timesheets">Timesheets</TabsTrigger>
-                 <TabsTrigger value="projects">Projects</TabsTrigger>
-                 <TabsTrigger value="attendance">Attendance</TabsTrigger>
-=======
       <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -113,7 +84,6 @@ export default function TimeTrackingPage() {
                      <tab.icon className="h-4 w-4 mb-0.5" /> {tab.label}
                    </TabsTrigger>
                  ))}
->>>>>>> origin/main:src/app/(dashboard)/time/page.tsx
               </TabsList>
            </div>
 
