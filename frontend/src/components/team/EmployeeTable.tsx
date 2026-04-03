@@ -22,15 +22,34 @@ import {
 import { Label } from '@/components/ui/label';
 import { MOCK_EMPLOYEES } from '@/lib/mock-team';
 import { Employee } from '@/types/team';
+import { getEmployees, createEmployee as createEmployeeApi } from '@/services/team.service';
+import { useEffect } from 'react';
 
 export function EmployeeTable() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filtered = MOCK_EMPLOYEES.filter(e => 
-    e.name.toLowerCase().includes(search.toLowerCase()) || 
-    e.email.toLowerCase().includes(search.toLowerCase()) ||
-    e.role.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await getEmployees();
+        setEmployees(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to fetch employees', err);
+        setEmployees([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const filtered = (employees || []).filter(e => 
+    (e.name || '').toLowerCase().includes(search.toLowerCase()) || 
+    (e.email || '').toLowerCase().includes(search.toLowerCase()) ||
+    (e.role || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (

@@ -1,98 +1,73 @@
+import { api } from './api';
 import type { 
   Campaign, Lead, MarketingSummary, FunnelStage, ChannelPerformance, LeadTrend, AudienceSegment 
 } from '@/types/marketing';
-import { 
-  MOCK_CAMPAIGNS, MOCK_LEADS, MOCK_MARKETING_SUMMARY, 
-  MOCK_FUNNEL_DATA, MOCK_CHANNEL_PERFORMANCE, MOCK_LEAD_TREND, MOCK_AUDIENCE_SEGMENTS 
-} from '@/lib/mock-marketing';
-
-const delay = (ms = 400) => new Promise(r => setTimeout(r, ms));
 
 export const marketingService = {
-  // GET /api/campaigns
+  // GET /marketing/campaigns
   async getCampaigns(): Promise<Campaign[]> {
-    await delay();
-    return MOCK_CAMPAIGNS;
+    const response = await api.get('/marketing/campaigns');
+    return response.data;
   },
 
-  // POST /api/campaigns
+  // POST /marketing/campaigns
   async createCampaign(data: Partial<Campaign>): Promise<Campaign> {
-    await delay(800);
-    const newCampaign = {
-      ...MOCK_CAMPAIGNS[0],
-      ...data,
-      id: `c${Date.now()}`,
-      status: 'Draft',
-      spend: 0,
-      leads: 0,
-      conversions: 0,
-      roi: 0,
-    } as Campaign;
-    console.log('POST /api/campaigns', newCampaign);
-    return newCampaign;
+    const response = await api.post('/marketing/campaigns', data);
+    return response.data;
   },
 
-  // GET /api/leads
+  // GET /marketing/leads
   async getLeads(): Promise<Lead[]> {
-    await delay();
-    return MOCK_LEADS;
+    const response = await api.get('/marketing/leads');
+    return response.data;
   },
 
-  // POST /api/leads
+  // POST /marketing/leads
   async createLead(data: Partial<Lead>): Promise<Lead> {
-    await delay(600);
-    const newLead = {
-      ...MOCK_LEADS[0],
-      ...data,
-      id: `l${Date.now()}`,
-      score: Math.floor(Math.random() * 50) + 20,
-      createdAt: new Date().toISOString(),
-    } as Lead;
-    console.log('POST /api/leads', newLead);
-    return newLead;
+    const response = await api.post('/marketing/leads', data);
+    return response.data;
   },
 
-  // PUT /api/leads/:id/status
+  // PATCH /marketing/leads/:id/status
   async updateLeadStatus(id: string, status: Lead['status']): Promise<Lead> {
-    await delay();
-    const lead = MOCK_LEADS.find(l => l.id === id) || MOCK_LEADS[0];
-    console.log(`PUT /api/leads/${id}/status`, status);
-    return { ...lead, status };
+    const response = await api.patch(`/marketing/leads/${id}/status`, { status });
+    return response.data;
   },
 
-  // GET /api/marketing/analytics
+  // GET /marketing/analytics
   async getMarketingAnalytics() {
-    await delay();
-    return {
-      summary: MOCK_MARKETING_SUMMARY,
-      channelPerformance: MOCK_CHANNEL_PERFORMANCE,
-      leadTrend: MOCK_LEAD_TREND,
-    };
+    const response = await api.get('/marketing/analytics');
+    return response.data;
   },
 
-  // GET /api/marketing/funnel
+  // GET /marketing/funnel (Still partially mocked or derived from analytics)
   async getFunnelData(): Promise<FunnelStage[]> {
-    await delay();
-    return MOCK_FUNNEL_DATA;
+    // Derive funnel from summary for now or return standard set
+    return [
+      { stage: 'Awareness', count: 1000, color: 'bg-blue-500', percent: 100 },
+      { stage: 'Interest', count: 450, color: 'bg-indigo-500', percent: 45 },
+      { stage: 'Decision', count: 120, color: 'bg-violet-500', percent: 12 },
+      { stage: 'Action', count: 45, color: 'bg-emerald-500', percent: 4.5 },
+    ];
   },
 
-  // GET /api/marketing/segments
+  // GET /marketing/segments (Mocked for now as no separate model yet)
   async getSegments(): Promise<AudienceSegment[]> {
-    await delay();
-    return MOCK_AUDIENCE_SEGMENTS;
+    return [
+      { id: '1', name: 'High Value', size: 1200, createdAt: '2024-01-01', filters: {}, tags: ['Premium'] },
+      { id: '2', name: 'Churn Risk', size: 450, createdAt: '2024-01-15', filters: {}, tags: ['At Risk'] },
+    ];
   },
 
-  // POST /api/marketing/segments
   async createSegment(data: Partial<AudienceSegment>): Promise<AudienceSegment> {
-    await delay(700);
-    const newSegment = {
-      ...MOCK_AUDIENCE_SEGMENTS[0],
-      ...data,
+    const newSegment: AudienceSegment = {
       id: `s${Date.now()}`,
-      size: Math.floor(Math.random() * 1000) + 50,
+      name: data.name || 'New Segment',
+      size: 0,
       createdAt: new Date().toISOString().split('T')[0],
-    } as AudienceSegment;
-    console.log('POST /api/marketing/segments', newSegment);
+      filters: {},
+      tags: [],
+    };
     return newSegment;
   },
 };

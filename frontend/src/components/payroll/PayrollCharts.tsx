@@ -42,7 +42,7 @@ export function PayrollCharts({ summary, isLoading }: PayrollChartsProps) {
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={summary.monthlyTrend}>
+            <AreaChart data={Array.isArray(summary?.monthlyTrend) ? summary.monthlyTrend : []}>
               <defs>
                 <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
@@ -70,7 +70,7 @@ export function PayrollCharts({ summary, isLoading }: PayrollChartsProps) {
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={summary.salaryDistribution}>
+            <BarChart data={Array.isArray(summary?.salaryDistribution) ? summary.salaryDistribution : []}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
               <XAxis dataKey="bracket" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#94a3b8' }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
@@ -89,7 +89,7 @@ export function PayrollCharts({ summary, isLoading }: PayrollChartsProps) {
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={summary.deptSalaryCost} layout="vertical" margin={{ left: 20 }}>
+            <BarChart data={Array.isArray(summary?.deptSalaryCost) ? summary.deptSalaryCost : []} layout="vertical" margin={{ left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" opacity={0.5} />
               <XAxis type="number" hide />
               <YAxis dataKey="dept" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }} width={100} />
@@ -113,7 +113,7 @@ export function PayrollCharts({ summary, isLoading }: PayrollChartsProps) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={summary.deductionBreakdown}
+                data={Array.isArray(summary?.deductionBreakdown) ? summary.deductionBreakdown : []}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -122,7 +122,7 @@ export function PayrollCharts({ summary, isLoading }: PayrollChartsProps) {
                 dataKey="value"
                 nameKey="name"
               >
-                {summary.deductionBreakdown.map((entry, index) => (
+                {(Array.isArray(summary?.deductionBreakdown) ? summary.deductionBreakdown : []).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

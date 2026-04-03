@@ -1,77 +1,61 @@
+import { api } from './api';
 import { Asset, AssetSummary, MaintenanceRecord, AssetTransferRecord } from '@/types/asset';
-import { MOCK_ASSETS, MOCK_ASSET_SUMMARY, MOCK_MAINTENANCE_HISTORY, MOCK_ASSET_TRANSFERS } from '@/lib/mock-assets';
-
-const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const assetService = {
-  // GET /api/assets
+  // GET /assets
   async getAssets(): Promise<Asset[]> {
-    await delay();
-    return MOCK_ASSETS;
+    const response = await api.get('/assets');
+    return response.data;
   },
 
-  // POST /api/assets
-  async createAsset(asset: Partial<Asset>): Promise<Asset> {
-    await delay(800);
-    const newAsset: Asset = {
-      ...MOCK_ASSETS[0],
-      ...asset,
-      id: `AST-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-      purchaseDate: asset.purchaseDate || new Date().toISOString().split('T')[0],
-      currentValue: asset.purchaseCost || 0,
-      status: 'Active' as const,
-      utilization: 100,
-      riskFactor: 'Low' as const,
-    };
-    console.log('API POST /api/assets', newAsset);
-    return newAsset;
-  },
-
-  // PUT /api/assets/:id
-  async updateAsset(id: string, asset: Partial<Asset>): Promise<Asset> {
-    await delay(600);
-    const existing = MOCK_ASSETS.find(a => a.id === id) || MOCK_ASSETS[0];
-    const updated = { ...existing, ...asset };
-    console.log(`API PUT /api/assets/${id}`, updated);
-    return updated;
-  },
-
-  // DELETE /api/assets/:id
-  async deleteAsset(id: string): Promise<boolean> {
-    await delay(1000);
-    console.log(`API DELETE /api/assets/${id}`);
-    return true;
-  },
-
-  // GET /api/assets/analytics
+  // GET /assets/summary
   async getAssetAnalytics(): Promise<AssetSummary> {
-    await delay();
-    return MOCK_ASSET_SUMMARY;
+    const response = await api.get('/assets/summary');
+    return response.data;
   },
 
-  // GET /api/assets/maintenance
+  // GET /assets/:id
+  async getAssetById(id: string): Promise<Asset> {
+    const response = await api.get(`/assets/${id}`);
+    return response.data;
+  },
+
+  // POST /assets
+  async createAsset(data: Partial<Asset>) {
+    const response = await api.post('/assets', data);
+    return response.data;
+  },
+
+  // PATCH /assets/:id
+  async updateAsset(id: string, data: Partial<Asset>) {
+    const response = await api.patch(`/assets/${id}`, data);
+    return response.data;
+  },
+
+  // DELETE /assets/:id
+  async deleteAsset(id: string) {
+    const response = await api.delete(`/assets/${id}`);
+    return response.data;
+  },
+
+  // GET /assets/:id/maintenance (History)
   async getMaintenanceHistory(assetId?: string): Promise<MaintenanceRecord[]> {
-    await delay();
-    if (assetId) {
-      return MOCK_MAINTENANCE_HISTORY.filter(m => m.assetId === assetId);
-    }
-    return MOCK_MAINTENANCE_HISTORY;
+    const response = await api.get('/assets/maintenance/history', {
+      params: { assetId }
+    });
+    return response.data;
   },
 
-  // POST /api/assets/assign
+  // POST /assign (Updating via asset update)
   async assignAsset(assetId: string, employeeName: string): Promise<Asset> {
-    await delay(700);
-    console.log(`API POST /api/assets/assign`, { assetId, employeeName });
-    const asset = MOCK_ASSETS.find(a => a.id === assetId) || MOCK_ASSETS[0];
-    return { ...asset, assignedTo: employeeName, status: 'Active' };
+    return this.updateAsset(assetId, { assignedTo: employeeName });
   },
 
-  // GET /api/assets/transfers
+  // GET /transfers (Placeholder - returns empty for now)
   async getAssetTransfers(assetId?: string): Promise<AssetTransferRecord[]> {
-    await delay();
-    if (assetId) {
-      return MOCK_ASSET_TRANSFERS.filter(t => t.assetId === assetId);
-    }
-    return MOCK_ASSET_TRANSFERS;
+    const response = await api.get('/assets/transfers', {
+      params: { assetId }
+    });
+    return response.data || [];
   }
 };

@@ -42,7 +42,7 @@ export function TeamCharts({ summary, isLoading }: TeamChartsProps) {
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={summary.hiringTrend}>
+            <AreaChart data={Array.isArray(summary?.hiringTrend) ? summary.hiringTrend : []}>
               <defs>
                 <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
@@ -71,7 +71,7 @@ export function TeamCharts({ summary, isLoading }: TeamChartsProps) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={summary.deptDistribution}
+                data={Array.isArray(summary?.deptDistribution) ? summary.deptDistribution : []}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -80,7 +80,7 @@ export function TeamCharts({ summary, isLoading }: TeamChartsProps) {
                 dataKey="value"
                 nameKey="name"
               >
-                {summary.deptDistribution.map((entry, index) => (
+                {(Array.isArray(summary?.deptDistribution) ? summary.deptDistribution : []).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -99,7 +99,7 @@ export function TeamCharts({ summary, isLoading }: TeamChartsProps) {
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={summary.attendanceTrend}>
+            <BarChart data={Array.isArray(summary?.attendanceTrend) ? summary.attendanceTrend : []}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
               <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#94a3b8' }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} unit="%" />
@@ -118,7 +118,7 @@ export function TeamCharts({ summary, isLoading }: TeamChartsProps) {
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={summary.roleDistribution} layout="vertical" margin={{ left: 20 }}>
+            <BarChart data={Array.isArray(summary?.roleDistribution) ? summary.roleDistribution : []} layout="vertical" margin={{ left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" opacity={0.5} />
               <XAxis type="number" hide />
               <YAxis dataKey="role" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }} width={100} />

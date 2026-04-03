@@ -13,8 +13,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/tables/DataTable';
 import { AddCustomerModal } from '@/components/forms/AddCustomerModal';
+import { useState, useEffect } from 'react';
+import { customersService, Customer as ApiCustomer } from '@/services/customers.service';
 import { Customer } from '@/types/customer';
-import { MOCK_CUSTOMERS } from '@/lib/mock-customers';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const getTagColor = (tag: string) => {
   switch (tag) {
@@ -46,12 +48,12 @@ const columns = [
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const status = row.original.status;
+      const status = row.original.status || 'ACTIVE';
       return (
         <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase ${
-          status === 'Active' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' 
-          : status === 'Blocked' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-          : status === 'On Hold' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+          status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' 
+          : status === 'BLOCKED' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+          : status === 'ON_HOLD' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
           : 'bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-400'
         }`}>
           {status}
@@ -63,7 +65,7 @@ const columns = [
     accessorKey: 'tags',
     header: 'Tags',
     cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const tags = row.original.tags;
+      const tags = row.original.tags || [];
       return (
         <div className="flex flex-wrap gap-1">
           {tags.map(tag => (
@@ -79,13 +81,13 @@ const columns = [
     accessorKey: 'currentBalance',
     header: () => <div className="text-right">Balance</div>,
     cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const amount = row.original.currentBalance;
-      const limit = row.original.creditLimit;
+      const amount = row.original.currentBalance || 0;
+      const limit = row.original.creditLimit || 0;
       const overLimit = amount > limit;
       
       const formatted = new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: row.original.currency === 'GBP' ? 'GBP' : 'USD', // simplistic mapping
+        currency: row.original.currency === 'GBP' ? 'GBP' : 'USD',
       }).format(amount);
       
       return (
@@ -102,7 +104,7 @@ const columns = [
     accessorKey: 'paymentBehaviorScore',
     header: () => <div className="text-center">Trust Score</div>,
     cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const score = row.original.paymentBehaviorScore;
+      const score = row.original.paymentBehaviorScore || 100;
       return (
         <div className="flex items-center justify-center gap-2">
           <div className="w-16 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
@@ -149,19 +151,40 @@ const columns = [
 ];
 
 export default function CustomersPage() {
-  const totalBalance = MOCK_CUSTOMERS.reduce((acc, curr) => acc + curr.currentBalance, 0);
-  const activeCount = MOCK_CUSTOMERS.filter(c => c.status === 'Active').length;
-  const highRiskCount = MOCK_CUSTOMERS.filter(c => c.tags.includes('High Risk') || c.status === 'Blocked').length;
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCustomers() {
+      setIsLoading(true);
+      try {
+        const data = await customersService.getCustomers();
+        setCustomers(Array.isArray(data) ? data as unknown as Customer[] : []);
+      } catch (err) {
+        console.error("Failed to fetch customers:", err);
+        setCustomers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCustomers();
+  }, []);
+
+  const totalBalance = (customers || []).reduce((acc, curr) => acc + (curr.currentBalance || 0), 0);
+  const activeCount = (customers || []).filter(c => c.status === 'ACTIVE').length;
+  const highRiskCount = (customers || []).filter(c => ((c as any).tags || []).includes('High Risk') || c.status === 'BLOCKED').length;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">Customers</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Manage your comprehensive client CRM and track financial ledgers.</p>
-        </div>
-        <AddCustomerModal />
-      </div>
+      <PageHeader 
+        title="Customers"
+        subtitle="Manage your comprehensive client CRM and track financial ledgers."
+        actions={
+          <AddCustomerModal onSuccess={() => {
+            customersService.getCustomers().then(data => setCustomers(Array.isArray(data) ? data as unknown as Customer[] : []));
+          }} />
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-5">
@@ -179,7 +202,7 @@ export default function CustomersPage() {
             <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Customers</h3>
             <span className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg"><UsersIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" /></span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{MOCK_CUSTOMERS.length}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{customers.length}</div>
         </div>
         
         <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-5">
@@ -199,8 +222,7 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Advanced Data Table Implementation */}
-      <DataTable columns={columns} data={MOCK_CUSTOMERS} searchKey="name" searchPlaceholder="Search by customer name..." />
+      <DataTable columns={columns} data={customers} searchKey="name" searchPlaceholder="Search by customer name..." isLoading={isLoading} />
     </div>
   );
 }

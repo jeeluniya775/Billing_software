@@ -47,12 +47,17 @@ const customerSchema = z.object({
   country: z.string().default('USA'),
 });
 
-export function AddCustomerModal() {
+import { customersService } from '@/services/customers.service';
+
+interface AddCustomerModalProps {
+  onSuccess?: () => void;
+}
+
+export function AddCustomerModal({ onSuccess }: AddCustomerModalProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof customerSchema>>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(customerSchema) as any,
     defaultValues: {
       name: '',
@@ -71,14 +76,39 @@ export function AddCustomerModal() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof customerSchema>) {
-    toast({
-      title: 'Customer Created',
-      description: `${values.company} (${values.name}) has been saved. Credit limit set to $${values.creditLimit.toLocaleString()}.`,
-      variant: 'default',
-    });
-    setOpen(false);
-    form.reset();
+  async function onSubmit(values: z.infer<typeof customerSchema>) {
+    try {
+      // Map form values to API structure
+      const apiData = {
+        ...values,
+        billingAddress: {
+          street: values.street,
+          city: values.city,
+          state: values.state,
+          zipCode: values.zipCode,
+          country: values.country,
+        },
+        paymentTerms: values.paymentTerms.replace(' ', '_').toUpperCase() as any,
+      };
+
+      await customersService.createCustomer(apiData);
+      
+      toast({
+        title: 'Customer Created',
+        description: `${values.company} has been saved successfully.`,
+        variant: 'default',
+      });
+      
+      setOpen(false);
+      form.reset();
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create customer. Please try again.',
+        variant: 'destructive',
+      });
+    }
   }
 
   return (

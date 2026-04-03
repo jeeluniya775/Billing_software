@@ -24,7 +24,7 @@ export function SalesByStatusPie({ data, isLoading }: SalesByStatusPieProps) {
     );
   }
 
-  const total = data.reduce((acc, curr) => acc + curr.value, 0);
+  const total = (Array.isArray(data) ? data : []).reduce((acc, curr) => acc + curr.value, 0);
 
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-neutral-100 dark:border-neutral-700 p-6">
@@ -36,7 +36,7 @@ export function SalesByStatusPie({ data, isLoading }: SalesByStatusPieProps) {
         <ResponsiveContainer width="100%" height="100%" minHeight={280}>
           <PieChart>
             <Pie
-              data={data}
+              data={Array.isArray(data) ? data : []}
               cx="50%"
               cy="45%"
               innerRadius={65}
@@ -45,7 +45,7 @@ export function SalesByStatusPie({ data, isLoading }: SalesByStatusPieProps) {
               dataKey="value"
               stroke="none"
             >
-              {data.map((entry, index) => (
+              {(Array.isArray(data) ? data : []).map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>

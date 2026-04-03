@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { MOCK_EXPENSES, MOCK_EXPENSE_SUMMARY, MOCK_EXPENSE_ANALYTICS, EXPENSE_CATEGORIES } from '@/lib/mock-expenses';
-import type { Expense, ExpenseStatus, PaymentMethod } from '@/types/expense';
+import type { Expense, ExpenseStatus, PaymentMethod, ExpenseSummary } from '@/types/expense';
+import { expensesService } from '@/services/expenses.service';
 import { ExpenseKpiCards } from '@/components/expenses/ExpenseKpiCards';
 import { ExpenseCategoryChart } from '@/components/expenses/ExpenseCategoryChart';
 import { MonthlyBurnChart } from '@/components/expenses/MonthlyBurnChart';
 import { ExpenseAnalyticsPanel } from '@/components/expenses/ExpenseAnalyticsPanel';
 import { AddExpenseModal } from '@/components/expenses/AddExpenseModal';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -50,12 +52,35 @@ export default function ExpensesPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [summary, setSummary] = useState<ExpenseSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleRefresh = () => setExpenses([...MOCK_EXPENSES]);
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [list, summ] = await Promise.all([
+        expensesService.getExpenses(),
+        expensesService.getExpenseSummary(),
+      ]);
+      setExpenses(Array.isArray(list) ? list : []);
+      setSummary(summ);
+    } catch (err) {
+      console.error('Failed to load expenses', err);
+      setExpenses([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleRefresh = () => loadData();
 
   const filtered = useMemo(() => {
-    let list = [...expenses];
+    let list = Array.isArray(expenses) ? [...expenses] : [];
     if (search) list = list.filter(e => e.vendor.toLowerCase().includes(search.toLowerCase()) || e.category.toLowerCase().includes(search.toLowerCase()) || e.expenseNo.toLowerCase().includes(search.toLowerCase()));
     if (statusFilter !== 'all') list = list.filter(e => e.status === statusFilter);
     if (categoryFilter !== 'all') list = list.filter(e => e.category === categoryFilter);
@@ -74,7 +99,7 @@ export default function ExpensesPage() {
     return list;
   }, [expenses, search, statusFilter, categoryFilter, methodFilter, dateFrom, dateTo, sortField, sortDir]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const totalPages = Math.ceil((filtered?.length || 0) / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const toggleSelect = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -110,28 +135,25 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Expenses</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Track, categorize, and manage all business expenses.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowAnalytics(v => !v)}>
-            <BarChart3 className="h-4 w-4" />
-            {showAnalytics ? 'Hide Analytics' : 'Analytics'}
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" /> Export
-          </Button>
-          <AddExpenseModal onExpenseAdded={handleRefresh} />
-        </div>
-      </div>
+      <PageHeader 
+        title="Expenses"
+        subtitle="Track, categorize, and manage all business expenses."
+        actions={
+          <>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowAnalytics(v => !v)}>
+              <BarChart3 className="h-4 w-4" />
+              {showAnalytics ? 'Hide Analytics' : 'Analytics'}
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Download className="h-4 w-4" /> Export
+            </Button>
+            <AddExpenseModal onExpenseAdded={handleRefresh} />
+          </>
+        }
+      />
 
       {/* KPIs */}
-      <ExpenseKpiCards summary={MOCK_EXPENSE_SUMMARY} />
+      <ExpenseKpiCards summary={summary || MOCK_EXPENSE_SUMMARY} />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

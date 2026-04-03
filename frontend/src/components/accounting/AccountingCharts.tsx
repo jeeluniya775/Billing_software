@@ -25,7 +25,7 @@ export function AccountingCharts({ plData, cashFlowData }: AccountingChartsProps
         </div>
         <div className="h-[250px] min-h-[250px]">
           <ResponsiveContainer width="100%" height="100%" minHeight={250}>
-            <ComposedChart data={plData} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+            <ComposedChart data={Array.isArray(plData) ? plData : []} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={fmtK} />
@@ -47,7 +47,7 @@ export function AccountingCharts({ plData, cashFlowData }: AccountingChartsProps
         </div>
         <div className="h-[250px] min-h-[250px]">
           <ResponsiveContainer width="100%" height="100%" minHeight={250}>
-            <AreaChart data={cashFlowData} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+            <AreaChart data={Array.isArray(cashFlowData) ? cashFlowData : []} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
               <defs>
                 <linearGradient id="inflowGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -79,7 +79,7 @@ export function AccountingCharts({ plData, cashFlowData }: AccountingChartsProps
         </div>
         <div className="h-[250px] min-h-[250px]">
           <ResponsiveContainer width="100%" height="100%" minHeight={250}>
-            <ComposedChart data={plData} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+            <ComposedChart data={Array.isArray(plData) ? plData : []} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={fmtK} />

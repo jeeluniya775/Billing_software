@@ -1,49 +1,45 @@
-import type { Expense, ExpenseSummary, ExpenseAnalytics } from '@/types/expense';
-import { MOCK_EXPENSES, MOCK_EXPENSE_SUMMARY, MOCK_EXPENSE_ANALYTICS } from '@/lib/mock-expenses';
-
-const simulateDelay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
+import { api } from './api';
+import { Expense, ExpenseSummary, ExpenseCategory } from '@/types/expense';
 
 export const expensesService = {
+  // GET /expense
   async getExpenses(): Promise<Expense[]> {
-    await simulateDelay();
-    return MOCK_EXPENSES;
+    const response = await api.get('/expense');
+    return response.data;
   },
 
-  async getSummary(): Promise<ExpenseSummary> {
-    await simulateDelay();
-    return MOCK_EXPENSE_SUMMARY;
-  },
-
-  async getAnalytics(): Promise<ExpenseAnalytics> {
-    await simulateDelay();
-    return MOCK_EXPENSE_ANALYTICS;
-  },
-
+  // POST /expense
   async createExpense(data: Partial<Expense>): Promise<Expense> {
-    await simulateDelay(600);
-    console.log('POST /api/expenses', data);
-    return { ...MOCK_EXPENSES[0], ...data, id: `e${Date.now()}`, expenseNo: `EXP-${Math.floor(Math.random() * 900 + 100)}` } as Expense;
+    const response = await api.post('/expense', data);
+    return response.data;
   },
 
+  // PATCH /expense/:id
   async updateExpense(id: string, data: Partial<Expense>): Promise<Expense> {
-    await simulateDelay();
-    console.log(`PUT /api/expenses/${id}`, data);
-    const expense = MOCK_EXPENSES.find(e => e.id === id) || MOCK_EXPENSES[0];
-    return { ...expense, ...data };
+    const response = await api.patch(`/expense/${id}`, data);
+    return response.data;
   },
 
+  // DELETE /expense/:id
   async deleteExpense(id: string): Promise<void> {
-    await simulateDelay();
-    console.log(`DELETE /api/expenses/${id}`);
+    await api.delete(`/expense/${id}`);
   },
 
-  async markAsPaid(id: string): Promise<void> {
-    await simulateDelay();
-    console.log(`PUT /api/expenses/${id} { status: 'Paid' }`);
-  },
-
-  async requestApproval(id: string): Promise<void> {
-    await simulateDelay();
-    console.log(`POST /api/expenses/${id}/approval`);
+  // GET /expense/summary (Mock or implement in backend)
+  async getExpenseSummary(): Promise<ExpenseSummary> {
+    try {
+      const response = await api.get('/expense/summary');
+      return response.data;
+    } catch (err) {
+      return {
+        totalToday: 0,
+        totalThisMonth: 0,
+        totalLastMonth: 0,
+        growthPercent: 0,
+        pendingAmount: 0,
+        recurringMonthly: 0,
+        categoryBreakdown: [],
+      };
+    }
   },
 };

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth.store';
 import { RevenueChart } from '@/components/charts/RevenueChart';
 import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
@@ -7,6 +8,9 @@ import { ProfitLossChart } from '@/components/charts/ProfitLossChart';
 import { mockData } from '@/lib/mock-data';
 import { AddExpenseModal } from '@/components/forms/AddExpenseModal';
 import { CreateInvoiceModal } from '@/components/forms/CreateInvoiceModal';
+import { salesService } from '@/services/sales.service';
+import { accountingService } from '@/services/accounting.service';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 // Icons
 import {
@@ -25,7 +29,38 @@ import {
 
 export default function Dashboard() {
   const { user } = useAuthStore();
-  
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [invList, accList] = await Promise.all([
+          salesService.getSales(),
+          accountingService.getAccounts()
+        ]);
+        setInvoices(Array.isArray(invList) ? invList : []);
+        setAccounts(Array.isArray(accList) ? accList : []);
+      } catch (err) {
+        console.error('Dashboard load failed', err);
+        setInvoices([]);
+        setAccounts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const stats = {
+    notPaid: (invoices || []).filter(i => i.status === 'PARTIAL' || i.status === 'DRAFT').reduce((s, i) => s + (i.total || 0), 0),
+    paid: (invoices || []).filter(i => i.status === 'PAID').reduce((s, i) => s + (i.total || 0), 0),
+    totalSales: (invoices || []).length,
+    deposited: (invoices || []).filter(i => i.status === 'PAID').reduce((s, i) => s + (i.total || 0), 0),
+    bankTotal: (accounts || []).filter(a => a.type === 'ASSET').reduce((s, a) => s + (a.balance || 0), 0),
+  };
+
   const greeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -34,16 +69,17 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-8 pb-8">
-      {/* 1. Greeting */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-          {greeting()}, {user?.name || 'User'}
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Here&apos;s what&apos;s happening with your business today.
-        </p>
-      </div>
+    <div className="space-y-6 pb-8">
+      <PageHeader 
+        title={`${greeting()}, ${user?.name || 'User'}`}
+        subtitle="Here's what's happening with your business today."
+        actions={
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Live Monitoring</span>
+          </div>
+        }
+      />
 
       {/* 2. Business Feed Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -132,24 +168,21 @@ export default function Dashboard() {
             </div>
             
             <div className="bg-orange-50 dark:bg-orange-900/10 rounded-lg p-4 border border-orange-100 dark:border-orange-900/30 text-center">
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">$4,500</div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">${stats.notPaid.toLocaleString()}</div>
               <span className="text-sm font-medium text-orange-800 dark:text-orange-300 flex justify-center items-center">
                 <Clock className="w-4 h-4 mr-1" /> Not Paid
               </span>
             </div>
 
             <div className="bg-emerald-50 dark:bg-emerald-900/10 rounded-lg p-4 border border-emerald-100 dark:border-emerald-900/30 text-center relative overflow-hidden">
-              {/* Connector line from previous box */}
-              <div className="absolute top-1/2 -left-3 w-6 border-t-2 border-emerald-200 dark:border-emerald-800 z-0 hidden md:block" />
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-1 z-10 relative">$12,400</div>
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-1 z-10 relative">${stats.paid.toLocaleString()}</div>
               <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300 flex justify-center items-center z-10 relative">
                 <CheckCircle2 className="w-4 h-4 mr-1" /> Paid
               </span>
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-4 border border-blue-100 dark:border-blue-900/30 text-center relative overflow-hidden">
-              <div className="absolute top-1/2 -left-3 w-6 border-t-2 border-blue-200 dark:border-blue-800 z-0 hidden md:block" />
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1 z-10 relative">$11,200</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1 z-10 relative">${stats.deposited.toLocaleString()}</div>
               <span className="text-sm font-medium text-blue-800 dark:text-blue-300 flex justify-center items-center z-10 relative">
                 <Briefcase className="w-4 h-4 mr-1" /> Deposited
               </span>
@@ -167,12 +200,12 @@ export default function Dashboard() {
           <div className="mb-6">
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Balance</p>
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-              ${mockData.bankAccounts.reduce((acc, account) => acc + account.balance, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ${stats.bankTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </h3>
           </div>
 
           <div className="space-y-4 flex-1">
-            {mockData.bankAccounts.map((account) => (
+            {accounts.filter(a => a.type === 'ASSET').slice(0, 4).map((account) => (
               <div key={account.id} className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-neutral-700 last:border-0 last:pb-0">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{account.name}</span>
                 <span className={`text-sm font-semibold ${account.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>

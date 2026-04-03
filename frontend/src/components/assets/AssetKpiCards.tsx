@@ -18,7 +18,7 @@ export function AssetKpiCards({ summary, isLoading }: AssetKpiCardsProps) {
   const cards = [
     {
       label: 'Total Assets',
-      value: summary.totalAssets,
+      value: summary?.totalAssets || 0,
       sub: 'Across all categories',
       icon: Package,
       color: 'text-indigo-600',
@@ -28,7 +28,7 @@ export function AssetKpiCards({ summary, isLoading }: AssetKpiCardsProps) {
     },
     {
       label: 'Active Assets',
-      value: summary.activeAssets,
+      value: summary?.activeAssets || 0,
       sub: 'Currently in use',
       icon: CheckCircle2,
       color: 'text-emerald-600',
@@ -38,7 +38,7 @@ export function AssetKpiCards({ summary, isLoading }: AssetKpiCardsProps) {
     },
     {
       label: 'In Maintenance',
-      value: summary.maintenanceAssets,
+      value: summary?.maintenanceAssets || 0,
       sub: 'Repair or routine check',
       icon: Activity,
       color: 'text-amber-600',
@@ -48,7 +48,7 @@ export function AssetKpiCards({ summary, isLoading }: AssetKpiCardsProps) {
     },
     {
       label: 'Total Asset Value',
-      value: fmtCurr(summary.totalValue),
+      value: fmtCurr(summary?.totalValue || 0),
       sub: 'Original purchase cost',
       icon: DollarSign,
       color: 'text-blue-600',
@@ -58,17 +58,17 @@ export function AssetKpiCards({ summary, isLoading }: AssetKpiCardsProps) {
     },
     {
       label: 'Depreciated Value',
-      value: fmtCurr(summary.depreciatedValue),
+      value: fmtCurr(summary?.depreciatedValue || 0),
       sub: 'Total value lost',
       icon: TrendingDown,
       color: 'text-rose-600',
       bg: 'bg-rose-50 dark:bg-rose-900/40',
       trend: '+5.4%',
-      up: true, // Depreciation increasing is "up" in value trend terms usually, but color is rose
+      up: true, 
     },
     {
       label: 'Utilization Rate',
-      value: `${summary.utilizationRate}%`,
+      value: `${summary?.utilizationRate || 0}%`,
       sub: 'Overall efficiency',
       icon: TrendingUp,
       color: 'text-violet-600',

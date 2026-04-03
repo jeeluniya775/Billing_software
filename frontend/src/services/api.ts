@@ -33,9 +33,15 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling 401 Unauthorized
+// Response interceptor for unwrapping standard ApiResponse and handling 401
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If the response follows our standard { success: true, data: ... } format, unwrap it
+    if (response.data && response.data.success === true && 'data' in response.data) {
+      return { ...response, data: response.data.data };
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();

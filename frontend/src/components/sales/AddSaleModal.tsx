@@ -5,6 +5,9 @@ import { useForm as useRHForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
+import { salesService } from '@/services/sales.service';
+import { customersService, Customer } from '@/services/customers.service';
+import { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -59,6 +62,13 @@ type SaleFormValues = z.infer<typeof saleFormSchema>;
 export function AddSaleModal() {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      customersService.getCustomers().then(setCustomers).catch(console.error);
+    }
+  }, [open]);
 
   const form = useRHForm<SaleFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,12 +118,17 @@ export function AddSaleModal() {
 
   async function onSubmit(values: SaleFormValues) {
     setIsSubmitting(true);
-    // Simulate API Create Sale
-    await new Promise((r) => setTimeout(r, 800));
-    console.log("SALE CREATED:", { ...values, totalAmount, subtotal, taxAmount });
-    setIsSubmitting(false);
-    setOpen(false);
-    form.reset();
+    try {
+      await salesService.createSale(values);
+      setOpen(false);
+      form.reset();
+      // Optional: window.location.reload() or refresh data via a prop if available
+      window.location.reload(); 
+    } catch (error) {
+      console.error("FAILED TO CREATE SALE:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -149,8 +164,8 @@ export function AddSaleModal() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {MOCK_CUSTOMERS.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.name} ({c.company})</SelectItem>
+                        {customers.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ''}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

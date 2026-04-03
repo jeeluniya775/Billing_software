@@ -15,7 +15,7 @@ export function TeamKpiCards({ summary, isLoading }: TeamKpiCardsProps) {
   const cards = [
     {
       label: 'Total Employees',
-      value: summary.totalEmployees,
+      value: summary?.totalEmployees || 0,
       sub: 'All registered accounts',
       icon: Users,
       color: 'text-indigo-600',
@@ -25,7 +25,7 @@ export function TeamKpiCards({ summary, isLoading }: TeamKpiCardsProps) {
     },
     {
       label: 'Active Employees',
-      value: summary.activeEmployees,
+      value: summary?.activeEmployees || 0,
       sub: 'Currently working',
       icon: UserCheck,
       color: 'text-emerald-600',
@@ -35,7 +35,7 @@ export function TeamKpiCards({ summary, isLoading }: TeamKpiCardsProps) {
     },
     {
       label: 'Departments',
-      value: summary.departmentsCount,
+      value: summary?.departmentsCount || 0,
       sub: 'Org-wide units',
       icon: Briefcase,
       color: 'text-amber-600',
@@ -45,7 +45,7 @@ export function TeamKpiCards({ summary, isLoading }: TeamKpiCardsProps) {
     },
     {
       label: 'New Joiners',
-      value: summary.newJoinersMonth,
+      value: summary?.newJoinersMonth || 0,
       sub: 'This month',
       icon: UserPlus,
       color: 'text-rose-600',
@@ -55,7 +55,7 @@ export function TeamKpiCards({ summary, isLoading }: TeamKpiCardsProps) {
     },
     {
       label: 'On Leave Today',
-      value: summary.onLeaveToday,
+      value: summary?.onLeaveToday || 0,
       sub: 'Out of office',
       icon: Calendar,
       color: 'text-blue-600',
@@ -65,7 +65,7 @@ export function TeamKpiCards({ summary, isLoading }: TeamKpiCardsProps) {
     },
     {
       label: 'Attendance Rate',
-      value: `${summary.attendanceRate}%`,
+      value: `${summary?.attendanceRate || 0}%`,
       sub: 'Weekly average',
       icon: Activity,
       color: 'text-violet-600',

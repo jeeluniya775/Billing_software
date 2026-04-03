@@ -41,7 +41,7 @@ export function MonthlyBurnChart({ data, isLoading }: MonthlyBurnChartProps) {
       </div>
       <div className="h-[280px] w-full min-h-[280px]">
         <ResponsiveContainer width="100%" height="100%" minHeight={280}>
-          <ComposedChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <ComposedChart data={Array.isArray(data) ? data : []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-neutral-700" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} tickFormatter={(v) => `$${v / 1000}k`} />

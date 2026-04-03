@@ -16,29 +16,29 @@ const budgetUsedPercent = (totalThisMonth: number) =>
   Math.min(100, Math.round((totalThisMonth / EXPENSE_BUDGET_MONTHLY) * 100));
 
 export function ExpenseKpiCards({ summary, isLoading }: ExpenseKpiCardsProps) {
-  const budgetPct = budgetUsedPercent(summary.totalThisMonth);
-  const overBudget = summary.totalThisMonth > EXPENSE_BUDGET_MONTHLY;
+  const budgetPct = budgetUsedPercent(summary?.totalThisMonth || 0);
+  const overBudget = (summary?.totalThisMonth || 0) > EXPENSE_BUDGET_MONTHLY;
 
   const cards = [
     {
       label: 'Total This Month',
-      value: formatCurrency(summary.totalThisMonth),
-      sub: `Today: ${formatCurrency(summary.totalToday)}`,
+      value: formatCurrency(summary?.totalThisMonth || 0),
+      sub: `Today: ${formatCurrency(summary?.totalToday || 0)}`,
       icon: DollarSign,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50 dark:bg-emerald-900/20',
     },
     {
       label: 'Growth vs Last Month',
-      value: `${summary.growthPercent > 0 ? '+' : ''}${summary.growthPercent.toFixed(1)}%`,
-      sub: `Last month: ${formatCurrency(summary.totalLastMonth)}`,
-      icon: summary.growthPercent > 0 ? TrendingUp : TrendingDown,
-      color: summary.growthPercent > 0 ? 'text-red-600' : 'text-emerald-600',
-      bg: summary.growthPercent > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20',
+      value: `${(summary?.growthPercent || 0) > 0 ? '+' : ''}${(summary?.growthPercent || 0).toFixed(1)}%`,
+      sub: `Last month: ${formatCurrency(summary?.totalLastMonth || 0)}`,
+      icon: (summary?.growthPercent || 0) > 0 ? TrendingUp : TrendingDown,
+      color: (summary?.growthPercent || 0) > 0 ? 'text-red-600' : 'text-emerald-600',
+      bg: (summary?.growthPercent || 0) > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20',
     },
     {
       label: 'Pending Payments',
-      value: formatCurrency(summary.pendingAmount),
+      value: formatCurrency(summary?.pendingAmount || 0),
       sub: 'Awaiting settlement',
       icon: Clock,
       color: 'text-amber-600',
@@ -46,7 +46,7 @@ export function ExpenseKpiCards({ summary, isLoading }: ExpenseKpiCardsProps) {
     },
     {
       label: 'Recurring (Monthly)',
-      value: formatCurrency(summary.recurringMonthly),
+      value: formatCurrency(summary?.recurringMonthly || 0),
       sub: 'Fixed recurring commitments',
       icon: RefreshCw,
       color: 'text-indigo-600',
@@ -75,7 +75,7 @@ export function ExpenseKpiCards({ summary, isLoading }: ExpenseKpiCardsProps) {
         <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300">
           <AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
           <span>
-            <strong>Budget exceeded!</strong> Monthly spend of {formatCurrency(summary.totalThisMonth)} is above the
+            <strong>Budget exceeded!</strong> Monthly spend of {formatCurrency(summary?.totalThisMonth || 0)} is above the
             budget of {formatCurrency(EXPENSE_BUDGET_MONTHLY)} ({budgetPct}% used).
           </span>
         </div>
@@ -107,7 +107,7 @@ export function ExpenseKpiCards({ summary, isLoading }: ExpenseKpiCardsProps) {
         <div className="flex justify-between items-center mb-2 text-sm">
           <span className="font-medium text-gray-700 dark:text-gray-300">Monthly Budget Usage</span>
           <span className={`font-bold ${overBudget ? 'text-red-600' : 'text-emerald-600'}`}>
-            {budgetPct}% — {formatCurrency(summary.totalThisMonth)} / {formatCurrency(EXPENSE_BUDGET_MONTHLY)}
+            {budgetPct}% — {formatCurrency(summary?.totalThisMonth || 0)} / {formatCurrency(EXPENSE_BUDGET_MONTHLY)}
           </span>
         </div>
         <div className="h-2.5 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">

@@ -13,6 +13,7 @@ import { salesService } from '@/services/sales.service';
 import Link from 'next/link';
 import { MoreHorizontal, FileText, CheckCircle2, Mail, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/layout/PageHeader';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +48,7 @@ const columns = [
     header: () => <div className="text-right">Amount</div>,
     cell: ({ row }: { row: import('@tanstack/react-table').Row<Sale> }) => (
       <div className="text-right font-medium text-gray-900 dark:text-white">
-        ${row.original.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+        ${(row.original.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
       </div>
     )
   },
@@ -58,7 +59,7 @@ const columns = [
       const due = row.original.due;
       return (
         <div className={`text-right font-medium ${due > 0 ? (row.original.status === 'Overdue' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400') : 'text-neutral-500'}`}>
-          ${due.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          ${(due || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </div>
       );
     }
@@ -147,12 +148,16 @@ export default function SalesPage() {
           salesService.getSummary(),
           salesService.getAnalytics()
         ]);
-        setSales(salesRes);
-        setSummary(summaryRes);
-        setTrendData(analyticsRes.revenueTrend);
-        setPieData(analyticsRes.salesByStatus);
+        setSales(Array.isArray(salesRes) ? salesRes : []);
+        setSummary(summaryRes || null);
+        setTrendData(Array.isArray(analyticsRes?.revenueTrend) ? analyticsRes.revenueTrend : []);
+        setPieData(Array.isArray(analyticsRes?.salesByStatus) ? analyticsRes.salesByStatus : []);
       } catch (err) {
         console.error("Failed to load sales dashboard:", err);
+        setSales([]);
+        setSummary(null);
+        setTrendData([]);
+        setPieData([]);
       } finally {
         setIsLoading(false);
       }
@@ -162,13 +167,11 @@ export default function SalesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">Sales & Revenue</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Comprehensive dashboard for managing invoices and revenue tracking.</p>
-        </div>
-        <AddSaleModal />
-      </div>
+      <PageHeader 
+        title="Sales & Revenue"
+        subtitle="Comprehensive dashboard for managing invoices and revenue tracking."
+        actions={<AddSaleModal />}
+      />
 
       {/* KPI Top Row */}
       {summary ? (

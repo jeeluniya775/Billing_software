@@ -15,7 +15,7 @@ export function TimeKpiCards({ summary, isLoading }: TimeKpiCardsProps) {
   const cards = [
     {
       label: 'Hours Today',
-      value: `${summary.totalHoursToday}h`,
+      value: `${summary?.totalHoursToday || 0}h`,
       sub: 'Clocked in at 09:05 AM',
       icon: Clock,
       color: 'text-indigo-600',
@@ -25,7 +25,7 @@ export function TimeKpiCards({ summary, isLoading }: TimeKpiCardsProps) {
     },
     {
       label: 'This Week',
-      value: `${summary.totalHoursWeek}h`,
+      value: `${summary?.totalHoursWeek || 0}h`,
       sub: 'Target: 40.0h',
       icon: Calendar,
       color: 'text-emerald-600',
@@ -35,8 +35,8 @@ export function TimeKpiCards({ summary, isLoading }: TimeKpiCardsProps) {
     },
     {
       label: 'Billable %',
-      value: `${((summary.billableHoursWeek / summary.totalHoursWeek) * 100).toFixed(0)}%`,
-      sub: `${summary.billableHoursWeek}h billable`,
+      value: `${(((summary?.billableHoursWeek || 0) / (summary?.totalHoursWeek || 1)) * 100).toFixed(0)}%`,
+      sub: `${summary?.billableHoursWeek || 0}h billable`,
       icon: DollarSign,
       color: 'text-amber-600',
       bg: 'bg-amber-50 dark:bg-amber-900/40',
@@ -45,7 +45,7 @@ export function TimeKpiCards({ summary, isLoading }: TimeKpiCardsProps) {
     },
     {
       label: 'Overtime',
-      value: `${summary.overtimeHoursWeek}h`,
+      value: `${summary?.overtimeHoursWeek || 0}h`,
       sub: 'Eligible for 1.5x',
       icon: Clock3,
       color: 'text-rose-600',
@@ -55,7 +55,7 @@ export function TimeKpiCards({ summary, isLoading }: TimeKpiCardsProps) {
     },
     {
       label: 'Productivity',
-      value: `${summary.productivityScore}%`,
+      value: `${summary?.productivityScore || 0}%`,
       sub: 'Based on focus time',
       icon: Zap,
       color: 'text-violet-600',

@@ -1,76 +1,74 @@
+import { api } from './api';
 import { Employee, Department, TeamSummary, AttendanceRecord, LeaveRequest, PerformanceMetrics, PayrollPreview } from '@/types/team';
-import { MOCK_EMPLOYEES, MOCK_DEPARTMENTS, MOCK_TEAM_SUMMARY, MOCK_LEAVE_REQUESTS, MOCK_PERFORMANCE, MOCK_PAYROLL } from '@/lib/mock-team';
 
-const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
-
-// GET /api/team/analytics
+// GET /hr/analytics (Note: Need to implement in backend or mock for now)
 export async function getTeamSummary(): Promise<TeamSummary> {
-  await delay();
-  return MOCK_TEAM_SUMMARY;
+  try {
+    const response = await api.get('/hr/analytics');
+    return response.data;
+  } catch (err) {
+    // Fallback if not implemented
+    return {
+      totalEmployees: 0,
+      activeEmployees: 0,
+      departmentsCount: 0,
+      newJoinersMonth: 0,
+      onLeaveToday: 0,
+      attendanceRate: 0,
+      hiringTrend: [],
+      deptDistribution: [],
+      attendanceTrend: [],
+      roleDistribution: [],
+    };
+  }
 }
 
-// GET /api/employees
+// GET /hr/employees
 export async function getEmployees(filters?: any): Promise<Employee[]> {
-  await delay(800);
-  let employees = [...MOCK_EMPLOYEES];
-  if (filters?.dept) employees = employees.filter(e => e.departmentId === filters.dept);
-  if (filters?.status) employees = employees.filter(e => e.status === filters.status);
-  return employees;
+  const response = await api.get('/hr/employees', { params: filters });
+  return response.data.map((e: any) => ({
+    ...e,
+    name: `${e.firstName} ${e.lastName}`,
+    role: e.jobTitle,
+    // Map status if needed (e.g. all-caps to Title Case if UI expects it)
+    status: e.status === 'ACTIVE' ? 'Active' : e.status === 'ON_LEAVE' ? 'On Leave' : 'Inactive',
+  }));
 }
 
-// POST /api/employees
-export async function createEmployee(data: Partial<Employee>): Promise<Employee> {
-  await delay(1000);
-  const newEmp: Employee = {
-    ...MOCK_EMPLOYEES[0],
-    ...data,
-    id: `EMP-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-  } as Employee;
-  console.log('API POST /api/employees', newEmp);
-  return newEmp;
+// POST /hr/employees
+export async function createEmployee(data: any): Promise<Employee> {
+  const response = await api.post('/hr/employees', data);
+  const e = response.data;
+  return {
+    ...e,
+    name: `${e.firstName} ${e.lastName}`,
+    role: e.jobTitle,
+  };
 }
 
-// PUT /api/employees/:id
+// PATCH /hr/employees/:id
 export async function updateEmployee(id: string, data: Partial<Employee>): Promise<Employee> {
-  await delay(800);
-  console.log(`API PUT /api/employees/${id}`, data);
-  return { ...MOCK_EMPLOYEES[0], ...data, id };
+  const response = await api.patch(`/hr/employees/${id}`, data);
+  return response.data;
 }
 
-// DELETE /api/employees/:id
+// DELETE /hr/employees/:id (Note: Need to implement controller)
 export async function deleteEmployee(id: string): Promise<boolean> {
-  await delay(500);
-  console.log(`API DELETE /api/employees/${id}`);
+  await api.delete(`/hr/employees/${id}`);
   return true;
 }
 
-// GET /api/departments
+// GET /hr/departments
 export async function getDepartments(): Promise<Department[]> {
-  await delay();
-  return MOCK_DEPARTMENTS;
+  // Mocking for now or implement in backend
+  return [
+    { id: '1', name: 'Engineering', head: 'John Doe', count: 12 },
+    { id: '2', name: 'Marketing', head: 'Jane Smith', count: 5 },
+  ];
 }
 
-// GET /api/leaves
-export async function getLeaveRequests(): Promise<LeaveRequest[]> {
-  await delay();
-  return MOCK_LEAVE_REQUESTS;
-}
-
-// GET /api/performance/:employeeId
-export async function getPerformanceMetrics(employeeId: string): Promise<PerformanceMetrics> {
-  await delay();
-  return MOCK_PERFORMANCE;
-}
-
-// GET /api/payroll-preview/:employeeId
-export async function getPayrollPreview(employeeId: string): Promise<PayrollPreview> {
-  await delay();
-  return MOCK_PAYROLL;
-}
-
-// POST /api/attendance
+// POST /hr/attendance
 export async function markAttendance(data: any): Promise<boolean> {
-  await delay(500);
-  console.log('API POST /api/attendance', data);
+  await api.post('/hr/attendance', data);
   return true;
 }

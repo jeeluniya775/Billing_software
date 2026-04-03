@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   LayoutDashboard, BookOpen, FileText, BarChart3, Scale, PieChart,
   Settings2, Download, RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AccountingKpiCards } from '@/components/accounting/AccountingKpiCards';
 import { AccountingCharts } from '@/components/accounting/AccountingCharts';
 import { ChartOfAccounts } from '@/components/accounting/ChartOfAccounts';
@@ -14,7 +15,9 @@ import { GeneralLedger } from '@/components/accounting/GeneralLedger';
 import { TrialBalance } from '@/components/accounting/TrialBalance';
 import { FinancialReports } from '@/components/accounting/FinancialReports';
 import { SmartAccountingPanel } from '@/components/accounting/SmartAccountingPanel';
-import { MOCK_ACCOUNTING_SUMMARY, MOCK_PL_DATA, MOCK_CASH_FLOW_DATA } from '@/lib/mock-accounting';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { accountingService } from '@/services/accounting.service';
+import { AccountingSummary } from '@/types/accounting';
 
 type Tab = 'overview' | 'accounts' | 'journal' | 'ledger' | 'trial' | 'reports' | 'settings';
 
@@ -30,70 +33,102 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
 
 export default function AccountingPage() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [summary, setSummary] = useState<AccountingSummary | null>(null);
+  const [plData, setPlData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      if (activeTab === 'overview') {
+        setIsLoading(true);
+        try {
+          const [summaryData, plReport] = await Promise.all([
+            accountingService.getSummary(),
+            accountingService.getPLReport(),
+          ]);
+          setSummary(summaryData as any);
+          setPlData(plReport);
+        } catch (err) {
+          console.error("Failed to fetch accounting data:", err);
+          setSummary(null);
+          setPlData(null);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }
+    loadData();
+  }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 px-4 md:px-6 py-6 space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Accounting</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Double-entry bookkeeping · FY 2025-26 · Period: Open
-          </p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Accounting"
+        subtitle="Double-entry bookkeeping · FY 2025-26"
+        actions={
+          <>
+            <Button variant="outline" size="sm" className="gap-2 h-9 text-xs" onClick={() => setActiveTab(activeTab)}>
+              <RefreshCw className="h-3.5 w-3.5" /> Refresh
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
+              <Download className="h-3.5 w-3.5" /> Export All
+            </Button>
+          </>
+        }
+      />
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)} className="space-y-6">
+        <div className="flex items-center justify-between">
+          <TabsList>
+            {TABS.map(tab => (
+              <TabsTrigger key={tab.id} value={tab.id}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
-            <RefreshCw className="h-3.5 w-3.5" /> Sync
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
-            <Download className="h-3.5 w-3.5" /> Export All
-          </Button>
-        </div>
-      </div>
 
-      {/* Tab Bar */}
-      <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none">
-        {TABS.map(tab => {
-          const Icon = tab.icon;
-          const active = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                active
-                  ? 'bg-white dark:bg-neutral-800 text-emerald-700 dark:text-emerald-400 shadow-sm border border-neutral-200 dark:border-neutral-700'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/50'
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+        <TabsContent value="overview" className="space-y-6 outline-none">
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-24 bg-white dark:bg-neutral-800 rounded-xl animate-pulse" />)}
+            </div>
+          ) : summary ? (
+            <>
+              <AccountingKpiCards summary={summary} />
+              <AccountingCharts plData={plData} cashFlowData={[]} />
+            </>
+          ) : (
+            <div className="text-center py-20 bg-white dark:bg-neutral-800 rounded-xl border border-dashed border-neutral-200">
+              <p className="text-neutral-500">No accounting data available. Start by adding accounts.</p>
+            </div>
+          )}
+        </TabsContent>
 
-      {/* Tab Content */}
-      <div>
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <AccountingKpiCards summary={MOCK_ACCOUNTING_SUMMARY} />
-            <AccountingCharts plData={MOCK_PL_DATA} cashFlowData={MOCK_CASH_FLOW_DATA} />
-          </div>
-        )}
+        <TabsContent value="accounts" className="outline-none">
+          <ChartOfAccounts />
+        </TabsContent>
 
-        {activeTab === 'accounts' && <ChartOfAccounts />}
+        <TabsContent value="journal" className="outline-none">
+          <JournalEntries />
+        </TabsContent>
 
-        {activeTab === 'journal' && <JournalEntries />}
+        <TabsContent value="ledger" className="outline-none">
+          <GeneralLedger />
+        </TabsContent>
 
-        {activeTab === 'ledger' && <GeneralLedger />}
+        <TabsContent value="trial" className="outline-none">
+          <TrialBalance />
+        </TabsContent>
 
-        {activeTab === 'trial' && <TrialBalance />}
+        <TabsContent value="reports" className="outline-none">
+          <FinancialReports />
+        </TabsContent>
 
-        {activeTab === 'reports' && <FinancialReports />}
-
-        {activeTab === 'settings' && <SmartAccountingPanel />}
-      </div>
+        <TabsContent value="settings" className="outline-none">
+          <SmartAccountingPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

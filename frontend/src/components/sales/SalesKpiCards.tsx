@@ -45,7 +45,7 @@ export function SalesKpiCards({ summary, isLoading }: SalesKpiCardsProps) {
           <span className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg"><DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /></span>
         </div>
         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-          {formatCurrency(summary.totalRevenue)}
+          {formatCurrency(summary?.totalRevenue || 0)}
         </div>
       </div>
 
@@ -55,7 +55,7 @@ export function SalesKpiCards({ summary, isLoading }: SalesKpiCardsProps) {
           <span className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg"><CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" /></span>
         </div>
         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-          {formatCurrency(summary.paidAmount)}
+          {formatCurrency(summary?.paidAmount || 0)}
         </div>
       </div>
 
@@ -65,7 +65,7 @@ export function SalesKpiCards({ summary, isLoading }: SalesKpiCardsProps) {
           <span className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg"><FileText className="h-4 w-4 text-amber-600 dark:text-amber-400" /></span>
         </div>
         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-          {formatCurrency(summary.unpaidAmount)}
+          {formatCurrency(summary?.unpaidAmount || 0)}
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export function SalesKpiCards({ summary, isLoading }: SalesKpiCardsProps) {
           <span className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg"><AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" /></span>
         </div>
         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-          {formatCurrency(summary.overdueAmount)}
+          {formatCurrency(summary?.overdueAmount || 0)}
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export function SalesKpiCards({ summary, isLoading }: SalesKpiCardsProps) {
           <span className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg"><BarChart3 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /></span>
         </div>
         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-          {summary.totalSalesThisMonth} <span className="text-sm font-normal text-neutral-500">inv.</span>
+          {summary?.totalSalesThisMonth || 0} <span className="text-sm font-normal text-neutral-500">inv.</span>
         </div>
       </div>
 
@@ -95,7 +95,7 @@ export function SalesKpiCards({ summary, isLoading }: SalesKpiCardsProps) {
           <span className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg"><TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /></span>
         </div>
         <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
-          +{summary.salesGrowthPercent}%
+          +{summary?.salesGrowthPercent || 0}%
         </div>
       </div>
 

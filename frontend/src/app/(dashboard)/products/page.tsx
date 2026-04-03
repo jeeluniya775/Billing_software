@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { productsService, Product } from '@/services/products.service';
 import { ProductModal } from '@/components/products/ProductModal';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -33,9 +34,10 @@ export default function ProductsPage() {
     setIsLoading(true);
     try {
       const data = await productsService.getAll(search, categoryFilter === 'all' ? undefined : categoryFilter);
-      setProducts(data);
+      setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
@@ -45,9 +47,9 @@ export default function ProductsPage() {
     fetchProducts();
   }, [search, categoryFilter]);
 
-  const filtered = useMemo(() => products, [products]);
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const filtered = useMemo(() => Array.isArray(products) ? products : [], [products]);
+  const totalPages = Math.ceil((filtered?.length || 0) / PAGE_SIZE);
+  const paginated = (filtered || []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -61,29 +63,26 @@ export default function ProductsPage() {
 
   // KPI Calculations
   const stats = {
-    total: products.length,
-    active: products.filter(p => p.isActive).length,
-    lowStock: products.filter(p => p.stock <= p.lowStockAlert).length,
-    totalValue: products.reduce((acc, p) => acc + (p.price * p.stock), 0),
+    total: (products || []).length,
+    active: (products || []).filter(p => p.isActive).length,
+    lowStock: (products || []).filter(p => p.stock <= p.lowStockAlert).length,
+    totalValue: (products || []).reduce((acc, p) => acc + (p.price * p.stock), 0),
   };
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Products & Inventory</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Manage your product catalog, pricing, and stock levels.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" /> Export
-          </Button>
-          <ProductModal onSuccess={fetchProducts} />
-        </div>
-      </div>
+      <PageHeader 
+        title="Products & Inventory"
+        subtitle="Manage your product catalog, pricing, and stock levels."
+        actions={
+          <>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Download className="h-4 w-4" /> Export
+            </Button>
+            <ProductModal onSuccess={fetchProducts} />
+          </>
+        }
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

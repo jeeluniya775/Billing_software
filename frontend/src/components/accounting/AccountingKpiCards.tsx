@@ -14,8 +14,8 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
   const cards = [
     {
       label: 'Total Assets',
-      value: fmt(summary.totalAssets),
-      sub: 'Equity: ' + fmt(summary.equity),
+      value: fmt(summary?.totalAssets || 0),
+      sub: 'Equity: ' + fmt(summary?.equity || 0),
       icon: Briefcase,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -24,7 +24,7 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Total Liabilities',
-      value: fmt(summary.totalLiabilities),
+      value: fmt(summary?.totalLiabilities || 0),
       sub: 'Debt ratio: 45.9%',
       icon: CreditCard,
       color: 'text-red-600',
@@ -34,8 +34,8 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Net Profit (YTD)',
-      value: fmt(summary.netProfit),
-      sub: 'Revenue: ' + fmt(summary.grossRevenue),
+      value: fmt(summary?.netProfit || 0),
+      sub: 'Revenue: ' + fmt(summary?.grossRevenue || 0),
       icon: TrendingUp,
       color: 'text-indigo-600',
       bg: 'bg-indigo-50 dark:bg-indigo-900/20',
@@ -44,7 +44,7 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Cash Flow (Feb)',
-      value: fmt(summary.cashFlow),
+      value: fmt(summary?.cashFlow || 0),
       sub: 'Net operating cash',
       icon: DollarSign,
       color: 'text-sky-600',
@@ -54,7 +54,7 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Accounts Receivable',
-      value: fmt(summary.accountsReceivable),
+      value: fmt(summary?.accountsReceivable || 0),
       sub: 'Outstanding invoices',
       icon: ArrowUpRight,
       color: 'text-amber-600',
@@ -64,7 +64,7 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Accounts Payable',
-      value: fmt(summary.accountsPayable),
+      value: fmt(summary?.accountsPayable || 0),
       sub: 'Vendor bills due',
       icon: Receipt,
       color: 'text-purple-600',

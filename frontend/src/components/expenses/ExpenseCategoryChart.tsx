@@ -28,7 +28,7 @@ export function ExpenseCategoryChart({ data, isLoading }: ExpenseCategoryChartPr
         <ResponsiveContainer width="100%" height="100%" minHeight={280}>
           <PieChart>
             <Pie
-              data={data}
+              data={Array.isArray(data) ? data : []}
               cx="50%"
               cy="45%"
               innerRadius={65}
@@ -37,7 +37,7 @@ export function ExpenseCategoryChart({ data, isLoading }: ExpenseCategoryChartPr
               dataKey="value"
               stroke="none"
             >
-              {data.map((entry, index) => (
+              {(Array.isArray(data) ? data : []).map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>

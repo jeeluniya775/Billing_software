@@ -15,8 +15,8 @@ export function MarketingKpiCards({ summary, isLoading }: MarketingKpiCardsProps
   const cards = [
     {
       label: 'Total Campaigns',
-      value: summary.totalCampaigns,
-      sub: `${summary.activeCampaigns} Active now`,
+      value: summary?.totalCampaigns || 0,
+      sub: `${summary?.activeCampaigns || 0} Active now`,
       icon: Megaphone,
       color: 'text-indigo-600',
       bg: 'bg-indigo-50 dark:bg-indigo-900/20',
@@ -25,7 +25,7 @@ export function MarketingKpiCards({ summary, isLoading }: MarketingKpiCardsProps
     },
     {
       label: 'Leads Generated',
-      value: fmt(summary.totalLeads),
+      value: fmt(summary?.totalLeads || 0),
       sub: 'This month',
       icon: Users,
       color: 'text-emerald-600',
@@ -35,7 +35,7 @@ export function MarketingKpiCards({ summary, isLoading }: MarketingKpiCardsProps
     },
     {
       label: 'Conversion Rate',
-      value: `${summary.conversionRate}%`,
+      value: `${summary?.conversionRate || 0}%`,
       sub: 'Leads to Customer',
       icon: UserCheck,
       color: 'text-amber-600',
@@ -45,7 +45,7 @@ export function MarketingKpiCards({ summary, isLoading }: MarketingKpiCardsProps
     },
     {
       label: 'Cost per Lead',
-      value: `$${summary.costPerLead.toFixed(2)}`,
+      value: `$${(summary?.costPerLead || 0).toFixed(2)}`,
       sub: 'Avg. across channels',
       icon: Target,
       color: 'text-rose-600',
@@ -55,7 +55,7 @@ export function MarketingKpiCards({ summary, isLoading }: MarketingKpiCardsProps
     },
     {
       label: 'Total Marketing ROI',
-      value: `${summary.averageROI}%`,
+      value: `${summary?.averageROI || 0}%`,
       sub: 'Revenue Attributed',
       icon: TrendingUp,
       color: 'text-violet-600',
@@ -65,8 +65,8 @@ export function MarketingKpiCards({ summary, isLoading }: MarketingKpiCardsProps
     },
     {
       label: 'Rev. Attributed',
-      value: fmtCurr(summary.revenueAttributed),
-      sub: `Spend: ${fmtCurr(summary.totalSpend)}`,
+      value: fmtCurr(summary?.revenueAttributed || 0),
+      sub: `Spend: ${fmtCurr(summary?.totalSpend || 0)}`,
       icon: DollarSign,
       color: 'text-sky-600',
       bg: 'bg-sky-50 dark:bg-sky-900/20',

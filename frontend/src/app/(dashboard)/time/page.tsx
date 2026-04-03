@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TimeKpiCards } from '@/components/time/TimeKpiCards';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { TimeCharts } from '@/components/time/TimeCharts';
 import { TimeEntryTable } from '@/components/time/TimeEntryTable';
 import { TimesheetView } from '@/components/time/TimesheetView';
@@ -26,9 +27,10 @@ export default function TimeTrackingPage() {
     async function loadData() {
       try {
         const data = await getSummary();
-        setSummary(data);
+        setSummary(data || null);
       } catch (error) {
         console.error('Failed to load time data', error);
+        setSummary(null);
       } finally {
         setIsLoading(false);
       }
@@ -38,49 +40,32 @@ export default function TimeTrackingPage() {
 
   return (
     <ProtectedRoute>
-      <div className="p-4 md:p-8 space-y-8 bg-neutral-50/50 dark:bg-black min-h-screen">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-black text-[10px] uppercase tracking-[0.2em]">
-               <Clock className="h-3 w-3" /> Professional Time Engine
-            </div>
-            <h1 className="text-4xl font-black text-indigo-950 dark:text-white tracking-tighter">
-              Time <span className="text-indigo-600 font-extrabold">&</span> Attendance
-            </h1>
-            <p className="text-sm font-bold text-neutral-400 italic">Track project hours, manage timesheets, and monitor team productivity.</p>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="h-12 px-6 rounded-2xl border-neutral-200 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] bg-white dark:bg-neutral-900 shadow-sm transition-all hover:border-indigo-200">
-              <Download className="h-4 w-4 mr-2" /> Export Logs
-            </Button>
-            <Button className="h-12 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-100 dark:shadow-none transition-all hover:scale-105 active:scale-95">
-              <Plus className="h-4 w-4 mr-2" /> New Entry
-            </Button>
-          </div>
-        </div>
+      <div className="space-y-6">
+        <PageHeader 
+          title="Time & Attendance"
+          subtitle="Track project hours, manage timesheets, and monitor team productivity."
+          actions={
+            <>
+              <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
+                <Download className="h-4 w-4" /> Export Logs
+              </Button>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-9 text-xs">
+                <Plus className="h-4 w-4" /> New Entry
+              </Button>
+            </>
+          }
+        />
 
         {summary && <TimeKpiCards summary={summary} isLoading={isLoading} />}
 
         <Tabs defaultValue="overview" className="space-y-8">
-           <div className="bg-white dark:bg-neutral-900 p-1.5 rounded-3xl border border-neutral-100 dark:border-neutral-800 shadow-sm inline-flex w-full md:w-auto overflow-x-auto whitespace-nowrap scrollbar-hide">
-              <TabsList className="bg-transparent h-12 gap-1">
-                 <TabsTrigger value="overview" className="rounded-2xl px-6 h-full data-[state=active]:bg-indigo-950 data-[state=active]:text-white font-black uppercase tracking-widest text-[10px] transition-all">
-                    <BarChart3 className="h-3.5 w-3.5 mr-2" /> Overview
-                 </TabsTrigger>
-                 <TabsTrigger value="entries" className="rounded-2xl px-6 h-full data-[state=active]:bg-indigo-950 data-[state=active]:text-white font-black uppercase tracking-widest text-[10px] transition-all">
-                    <Timer className="h-3.5 w-3.5 mr-2" /> Time Entries
-                 </TabsTrigger>
-                 <TabsTrigger value="timesheets" className="rounded-2xl px-6 h-full data-[state=active]:bg-indigo-950 data-[state=active]:text-white font-black uppercase tracking-widest text-[10px] transition-all">
-                    <History className="h-3.5 w-3.5 mr-2" /> Timesheets
-                 </TabsTrigger>
-                 <TabsTrigger value="projects" className="rounded-2xl px-6 h-full data-[state=active]:bg-indigo-950 data-[state=active]:text-white font-black uppercase tracking-widest text-[10px] transition-all">
-                    <Briefcase className="h-3.5 w-3.5 mr-2" /> Projects
-                 </TabsTrigger>
-                 <TabsTrigger value="attendance" className="rounded-2xl px-6 h-full data-[state=active]:bg-indigo-950 data-[state=active]:text-white font-black uppercase tracking-widest text-[10px] transition-all">
-                    <UserCheck className="h-3.5 w-3.5 mr-2" /> Attendance
-                 </TabsTrigger>
+           <div className="flex items-center justify-between">
+              <TabsList className="h-10">
+                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                 <TabsTrigger value="entries">Time Entries</TabsTrigger>
+                 <TabsTrigger value="timesheets">Timesheets</TabsTrigger>
+                 <TabsTrigger value="projects">Projects</TabsTrigger>
+                 <TabsTrigger value="attendance">Attendance</TabsTrigger>
               </TabsList>
            </div>
 

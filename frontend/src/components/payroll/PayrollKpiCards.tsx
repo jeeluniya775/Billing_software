@@ -15,17 +15,17 @@ export function PayrollKpiCards({ summary, isLoading }: PayrollKpiCardsProps) {
   const cards = [
     {
       label: 'Total Payroll',
-      value: `$${summary.totalPayroll.toLocaleString()}`,
+      value: `$${(summary?.totalPayroll || 0).toLocaleString()}`,
       sub: 'Budgeted - Feb 2024',
       icon: Wallet,
       color: 'text-indigo-600',
       bg: 'bg-indigo-50 dark:bg-indigo-900/40',
-      trend: `+${summary.growthPercentage}%`,
+      trend: `+${summary?.growthPercentage || 0}%`,
       up: true,
     },
     {
       label: 'Employees Paid',
-      value: summary.totalEmployeesPaid,
+      value: summary?.totalEmployeesPaid || 0,
       sub: 'Processed successfully',
       icon: Users,
       color: 'text-emerald-600',
@@ -35,7 +35,7 @@ export function PayrollKpiCards({ summary, isLoading }: PayrollKpiCardsProps) {
     },
     {
       label: 'Pending Payroll',
-      value: `$${summary.pendingPayroll.toLocaleString()}`,
+      value: `$${(summary?.pendingPayroll || 0).toLocaleString()}`,
       sub: 'Action required',
       icon: Clock,
       color: 'text-rose-600',
@@ -45,7 +45,7 @@ export function PayrollKpiCards({ summary, isLoading }: PayrollKpiCardsProps) {
     },
     {
       label: 'Total Deductions',
-      value: `$${summary.totalDeductions.toLocaleString()}`,
+      value: `$${(summary?.totalDeductions || 0).toLocaleString()}`,
       sub: 'Tax, PF, ESI, etc.',
       icon: TrendingDown,
       color: 'text-amber-600',
@@ -55,7 +55,7 @@ export function PayrollKpiCards({ summary, isLoading }: PayrollKpiCardsProps) {
     },
     {
       label: 'Net Salary Paid',
-      value: `$${summary.netSalaryPaid.toLocaleString()}`,
+      value: `$${(summary?.netSalaryPaid || 0).toLocaleString()}`,
       sub: 'Total disbursal',
       icon: CreditCard,
       color: 'text-indigo-600',
@@ -65,7 +65,7 @@ export function PayrollKpiCards({ summary, isLoading }: PayrollKpiCardsProps) {
     },
     {
       label: 'Payroll Growth',
-      value: `${summary.growthPercentage}%`,
+      value: `${summary?.growthPercentage || 0}%`,
       sub: 'Monthly variance',
       icon: TrendingUp,
       color: 'text-violet-600',

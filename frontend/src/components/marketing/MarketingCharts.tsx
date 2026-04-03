@@ -43,7 +43,7 @@ export function MarketingCharts({ trendData, funnelData, channelData, isLoading 
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={trendData}>
+            <AreaChart data={Array.isArray(trendData) ? trendData : []}>
               <defs>
                 <linearGradient id="leadGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -71,7 +71,7 @@ export function MarketingCharts({ trendData, funnelData, channelData, isLoading 
           <p className="text-xs text-neutral-500">Full lifecycle marketing funnel</p>
         </div>
         <div className="space-y-4">
-          {funnelData.map((stage) => (
+          {(Array.isArray(funnelData) ? funnelData : []).map((stage) => (
             <div key={stage.stage} className="space-y-1.5">
               <div className="flex justify-between text-xs">
                 <span className="font-medium text-gray-700 dark:text-gray-300">{stage.stage}</span>
@@ -96,7 +96,7 @@ export function MarketingCharts({ trendData, funnelData, channelData, isLoading 
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={channelData} layout="vertical" margin={{ left: 20 }}>
+            <BarChart data={Array.isArray(channelData) ? channelData : []} layout="vertical" margin={{ left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" opacity={0.5} />
               <XAxis type="number" hide />
               <YAxis dataKey="channel" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
@@ -126,7 +126,7 @@ export function MarketingCharts({ trendData, funnelData, channelData, isLoading 
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={trendData}>
+            <ComposedChart data={Array.isArray(trendData) ? trendData : []}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={fmtK} />

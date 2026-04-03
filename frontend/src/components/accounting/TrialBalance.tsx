@@ -12,15 +12,15 @@ const ACCOUNT_TYPES: AccountType[] = ['Assets', 'Liabilities', 'Equity', 'Income
 export function TrialBalance() {
   const [dateFilter, setDateFilter] = useState('2026-02-28');
 
-  const totalDebit = MOCK_TRIAL_BALANCE.reduce((s, r) => s + r.debit, 0);
-  const totalCredit = MOCK_TRIAL_BALANCE.reduce((s, r) => s + r.credit, 0);
+  const totalDebit = (MOCK_TRIAL_BALANCE || []).reduce((s, r) => s + r.debit, 0);
+  const totalCredit = (MOCK_TRIAL_BALANCE || []).reduce((s, r) => s + r.credit, 0);
   const isBalanced = Math.abs(totalDebit - totalCredit) < 1;
 
   const byType = ACCOUNT_TYPES.map(type => ({
     type,
-    rows: MOCK_TRIAL_BALANCE.filter(r => r.accountType === type),
-    debit: MOCK_TRIAL_BALANCE.filter(r => r.accountType === type).reduce((s, r) => s + r.debit, 0),
-    credit: MOCK_TRIAL_BALANCE.filter(r => r.accountType === type).reduce((s, r) => s + r.credit, 0),
+    rows: (MOCK_TRIAL_BALANCE || []).filter(r => r.accountType === type),
+    debit: (MOCK_TRIAL_BALANCE || []).filter(r => r.accountType === type).reduce((s, r) => s + r.debit, 0),
+    credit: (MOCK_TRIAL_BALANCE || []).filter(r => r.accountType === type).reduce((s, r) => s + r.credit, 0),
   }));
 
   return (

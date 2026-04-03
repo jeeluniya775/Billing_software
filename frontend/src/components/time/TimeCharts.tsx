@@ -34,8 +34,8 @@ export function TimeCharts({ summary, isLoading }: TimeChartsProps) {
   }
 
   const billableVsNon = [
-    { name: 'Billable', value: summary.billableHoursWeek },
-    { name: 'Non-Billable', value: summary.nonBillableHoursWeek },
+    { name: 'Billable', value: summary?.billableHoursWeek || 0 },
+    { name: 'Non-Billable', value: summary?.nonBillableHoursWeek || 0 },
   ];
 
   return (
@@ -48,7 +48,7 @@ export function TimeCharts({ summary, isLoading }: TimeChartsProps) {
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={summary.weeklyTrend}>
+            <BarChart data={Array.isArray(summary?.weeklyTrend) ? summary.weeklyTrend : []}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
               <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#94a3b8' }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
@@ -74,7 +74,7 @@ export function TimeCharts({ summary, isLoading }: TimeChartsProps) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={billableVsNon}
+                data={Array.isArray(billableVsNon) ? billableVsNon : []}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -101,13 +101,13 @@ export function TimeCharts({ summary, isLoading }: TimeChartsProps) {
         </div>
         <div className="h-[250px] w-full min-h-[250px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={summary.projectDistribution} layout="vertical" margin={{ left: 20 }}>
+            <BarChart data={Array.isArray(summary?.projectDistribution) ? summary.projectDistribution : []} layout="vertical" margin={{ left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" opacity={0.5} />
               <XAxis type="number" hide />
               <YAxis dataKey="project" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }} width={120} />
               <Tooltip cursor={{ fill: '#f8fafc' }} />
               <Bar dataKey="hours" name="Hours Spent" radius={[0, 4, 4, 0]} barSize={20}>
-                {summary.projectDistribution.map((entry, index) => (
+                {(Array.isArray(summary?.projectDistribution) ? summary.projectDistribution : []).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Bar>

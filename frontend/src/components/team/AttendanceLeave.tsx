@@ -10,8 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MOCK_LEAVE_REQUESTS, MOCK_TEAM_SUMMARY } from '@/lib/mock-team';
+import { TeamSummary, LeaveRequest } from '@/types/team';
 
-export function AttendanceLeave() {
+interface AttendanceLeaveProps {
+  summary: TeamSummary | null;
+  leaveRequests?: LeaveRequest[];
+}
+
+export function AttendanceLeave({ summary, leaveRequests = [] }: AttendanceLeaveProps) {
+  const displaySummary = summary || MOCK_TEAM_SUMMARY;
+  const displayLeaves = leaveRequests.length > 0 ? leaveRequests : MOCK_LEAVE_REQUESTS;
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -40,7 +48,7 @@ export function AttendanceLeave() {
                <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-14">
                   <div className="text-center group/stat">
                      <p className="text-[10px] font-black text-neutral-400 uppercase tracking-[0.2em] mb-3 group-hover/stat:text-indigo-600 transition-colors">Presence Rate</p>
-                     <h2 className="text-5xl font-black text-indigo-950 dark:text-white font-mono tracking-tighter">{MOCK_TEAM_SUMMARY.attendanceRate}%</h2>
+                     <h2 className="text-5xl font-black text-indigo-950 dark:text-white font-mono tracking-tighter">{displaySummary.attendanceRate}%</h2>
                      <div className="flex items-center justify-center gap-2 text-[10px] text-emerald-600 font-bold mt-2 uppercase italic">
                         <TrendingUp className="h-3 w-3" /> Industry Benchmark 92%
                      </div>
@@ -51,7 +59,7 @@ export function AttendanceLeave() {
                   
                   <div className="text-center">
                      <p className="text-[10px] font-black text-neutral-400 uppercase tracking-[0.2em] mb-3">On Leave Today</p>
-                     <h2 className="text-5xl font-black text-indigo-600 font-mono tracking-tighter">{MOCK_TEAM_SUMMARY.onLeaveToday}</h2>
+                     <h2 className="text-5xl font-black text-indigo-600 font-mono tracking-tighter">{displaySummary.onLeaveToday}</h2>
                      <p className="text-[10px] text-neutral-400 font-bold mt-2 uppercase italic tracking-widest">Active Leave Requests</p>
                   </div>
                </div>
@@ -147,7 +155,7 @@ export function AttendanceLeave() {
                   </tr>
                </thead>
                <tbody className="divide-y divide-neutral-50 dark:divide-neutral-800">
-                  {MOCK_LEAVE_REQUESTS.map((req) => (
+                  {displayLeaves.map((req) => (
                      <tr key={req.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-all group">
                         <td className="px-6 py-6">
                            <div className="flex items-center gap-3">

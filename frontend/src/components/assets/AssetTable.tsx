@@ -20,18 +20,26 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Asset, AssetStatus, AssetCategory } from '@/types/asset';
-import { MOCK_ASSETS } from '@/lib/mock-assets';
+import { assetService } from '@/services/asset.service';
 import { AssetDetailDrawer } from './AssetDetailDrawer';
 
-const STATUS_STYLE: Record<AssetStatus, string> = {
-  Active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-200',
+import { AssetFormModal } from './AssetFormModal';
+import { AssetTagModal } from './AssetTagModal';
+
+const STATUS_STYLE: Record<string, string> = {
+  'Active': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-200',
+  'ACTIVE': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 border-emerald-200',
   'In Repair': 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 border-amber-200',
-  Maintenance: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-400 border-blue-200',
-  Disposed: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-200',
-  Lost: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-400 border-rose-200',
+  'IN_REPAIR': 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 border-amber-200',
+  'Maintenance': 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-400 border-blue-200',
+  'MAINTENANCE': 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-400 border-blue-200',
+  'Disposed': 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-200',
+  'DISPOSED': 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-200',
+  'Lost': 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-400 border-rose-200',
+  'LOST': 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-400 border-rose-200',
 };
 
-const CATEGORY_ICONS: Record<AssetCategory, any> = {
+const CATEGORY_ICONS: Record<string, any> = {
   'IT Equipment': LayoutGrid,
   Machinery: AlertCircle,
   Furniture: List,
@@ -40,24 +48,60 @@ const CATEGORY_ICONS: Record<AssetCategory, any> = {
   Other: LayoutGrid,
 };
 
-export function AssetTable() {
+interface AssetTableProps {
+  assets: Asset[];
+  onRefresh?: () => void;
+}
+
+export function AssetTable({ assets, onRefresh }: AssetTableProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [selectedAssetForTag, setSelectedAssetForTag] = useState<Asset | null>(null);
 
-  const filtered = MOCK_ASSETS.filter(a => {
-    const matchSearch = !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.id.toLowerCase().includes(search.toLowerCase());
+  const filtered = assets.filter(a => {
+    const nameMatch = a.name?.toLowerCase().includes(search.toLowerCase());
+    const idMatch = a.id?.toLowerCase().includes(search.toLowerCase());
+    const snMatch = a.serialNumber?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || nameMatch || idMatch || snMatch;
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
     const matchCategory = categoryFilter === 'all' || a.category === categoryFilter;
     return matchSearch && matchStatus && matchCategory;
   });
 
+  const handleDeleteAsset = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to dispose of this asset?')) {
+      try {
+        await assetService.deleteAsset(id);
+        onRefresh?.();
+      } catch (error) {
+        console.error('Failed to delete asset:', error);
+      }
+    }
+  };
+
   const handleViewDetails = (asset: Asset) => {
     setSelectedAsset(asset);
     setIsDrawerOpen(true);
+  };
+
+  const handleEditAsset = (asset: Asset, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingAsset(asset);
+    setIsEditModalOpen(true);
+  };
+
+  const handleGenerateTag = (asset: Asset, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedAssetForTag(asset);
+    setIsTagModalOpen(true);
   };
 
   return (
@@ -85,6 +129,7 @@ export function AssetTable() {
               <SelectItem value="Machinery">Machinery</SelectItem>
               <SelectItem value="Vehicles">Vehicles</SelectItem>
               <SelectItem value="Furniture">Furniture</SelectItem>
+              <SelectItem value="Infrastructure">Infrastructure</SelectItem>
             </SelectContent>
           </Select>
 
@@ -105,65 +150,25 @@ export function AssetTable() {
             <Download className="h-4 w-4" /> Export
           </Button>
 
-          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="h-11 bg-indigo-600 hover:bg-indigo-700 text-white text-xs gap-2 font-bold px-5">
-                <Plus className="h-4 w-4" /> Add Asset
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Register New Asset</DialogTitle>
-                <DialogDescription>Enter the asset details to initiate tracking and depreciation.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-6 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Asset Name</label>
-                     <Input placeholder="e.g. Dell Latitude 5420" className="text-sm" />
-                   </div>
-                   <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Category</label>
-                     <Select defaultValue="IT Equipment">
-                       <SelectTrigger className="text-sm font-medium">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent>
-                          <SelectItem value="IT Equipment">IT Equipment</SelectItem>
-                          <SelectItem value="Machinery">Machinery</SelectItem>
-                          <SelectItem value="Vehicles">Vehicles</SelectItem>
-                          <SelectItem value="Furniture">Furniture</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Purchase Cost (USD)</label>
-                     <Input type="number" placeholder="0.00" className="text-sm font-bold" />
-                   </div>
-                   <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Serial Number</label>
-                     <Input placeholder="SN-XXXX-XXXX" className="text-sm font-mono uppercase" />
-                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Location</label>
-                     <Input placeholder="e.g. Office Wing A" className="text-sm" />
-                   </div>
-                   <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Purchase Date</label>
-                     <Input type="date" className="text-sm" />
-                   </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsModalOpen(false)} className="font-bold">Cancel</Button>
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8">Create Asset</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            className="h-11 bg-indigo-600 hover:bg-indigo-700 text-white text-xs gap-2 font-bold px-5"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Plus className="h-4 w-4" /> Add Asset
+          </Button>
+
+          <AssetFormModal 
+            isOpen={isModalOpen} 
+            onOpenChange={setIsModalOpen} 
+            onSuccess={onRefresh} 
+          />
+
+          <AssetFormModal 
+            isOpen={isEditModalOpen} 
+            onOpenChange={setIsEditModalOpen} 
+            onSuccess={onRefresh}
+            asset={editingAsset}
+          />
         </div>
       </div>
 
@@ -197,22 +202,34 @@ export function AssetTable() {
                 <td className="px-6 py-5 whitespace-nowrap">
                    <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400 font-medium">
-                        <MapPin className="h-3 w-3" /> {asset.location}
+                        <MapPin className="h-3.5 w-3.5" /> {asset.location || 'N/A'}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-neutral-400 font-bold uppercase tracking-widest text-[10px]">
-                        <User className="h-3 w-3" /> {asset.assignedTo || 'Unassigned'}
+                        <User className="h-3.5 w-3.5" /> {asset.assignedTo || 'Unassigned'}
                       </div>
                    </div>
                 </td>
                 <td className="px-6 py-5 text-right font-bold text-neutral-500">
-                   ${asset.purchaseCost.toLocaleString()}
+                   ${(asset.purchaseCost || 0).toLocaleString()}
                 </td>
                 <td className="px-6 py-5 text-right">
-                   <p className="font-black text-gray-900 dark:text-white">${asset.currentValue.toLocaleString()}</p>
-                   <p className="text-[10px] text-rose-500 font-bold">-{((1 - asset.currentValue / asset.purchaseCost) * 100).toFixed(1)}% dep.</p>
+                   <p className="font-black text-gray-900 dark:text-white">${(asset.currentValue || 0).toLocaleString()}</p>
+                   {asset.purchaseCost && asset.purchaseCost > 0 && (
+                     (() => {
+                        const diff = asset.currentValue - asset.purchaseCost;
+                        const percent = (Math.abs(diff) / asset.purchaseCost) * 100;
+                        if (diff > 0) {
+                          return <p className="text-[10px] text-emerald-500 font-bold">+{percent.toFixed(1)}% app.</p>;
+                        } else if (diff < 0) {
+                          return <p className="text-[10px] text-rose-500 font-bold">-{percent.toFixed(1)}% dep.</p>;
+                        } else {
+                          return <p className="text-[10px] text-neutral-400 font-bold">0% change</p>;
+                        }
+                     })()
+                   )}
                 </td>
                 <td className="px-6 py-5 text-center">
-                   <Badge variant="outline" className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 border shadow-sm ${STATUS_STYLE[asset.status]}`}>
+                   <Badge variant="outline" className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 border shadow-sm ${STATUS_STYLE[asset.status] || 'bg-neutral-100'}`}>
                      {asset.status}
                    </Badge>
                 </td>
@@ -228,14 +245,23 @@ export function AssetTable() {
                       <DropdownMenuItem className="gap-2 cursor-pointer font-bold text-xs" onClick={() => handleViewDetails(asset)}>
                         <ExternalLink className="h-3.5 w-3.5" /> View Lifecycle
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2 cursor-pointer font-bold text-xs">
+                      <DropdownMenuItem 
+                        className="gap-2 cursor-pointer font-bold text-xs"
+                        onClick={(e) => handleGenerateTag(asset, e as any)}
+                       >
                         <QrCode className="h-3.5 w-3.5" /> Generate Tag
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2 cursor-pointer font-bold text-xs">
+                      <DropdownMenuItem 
+                        className="gap-2 cursor-pointer font-bold text-xs"
+                        onClick={(e) => handleEditAsset(asset, e as any)}
+                      >
                         <Pencil className="h-3.5 w-3.5" /> Edit Asset
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem className="gap-2 text-rose-600 cursor-pointer font-bold text-xs">
+                      <DropdownMenuItem 
+                        className="gap-2 text-rose-600 cursor-pointer font-bold text-xs"
+                        onClick={(e) => handleDeleteAsset(asset.id, e as any)}
+                       >
                         <Trash2 className="h-3.5 w-3.5" /> Dispose Asset
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -249,16 +275,29 @@ export function AssetTable() {
 
       {/* Pagination Placeholder */}
       <div className="flex items-center justify-between px-2 text-xs text-neutral-400 font-bold uppercase tracking-widest py-2">
-         <p>Showing 1-8 of 124 Assets</p>
+         <p>Showing {filtered.length} Assets</p>
          <div className="flex gap-2">
             <Button variant="outline" size="sm" className="h-8 shadow-sm">Previous</Button>
             <Button variant="outline" size="sm" className="h-8 shadow-sm bg-neutral-50 dark:bg-neutral-800 text-indigo-600 border-indigo-200">1</Button>
-            <Button variant="outline" size="sm" className="h-8 shadow-sm">2</Button>
             <Button variant="outline" size="sm" className="h-8 shadow-sm">Next</Button>
          </div>
       </div>
 
-      <AssetDetailDrawer asset={selectedAsset!} isOpen={isDrawerOpen} onOpenChange={setIsDrawerOpen} />
+      <AssetDetailDrawer 
+        asset={selectedAsset!} 
+        isOpen={isDrawerOpen} 
+        onOpenChange={setIsDrawerOpen} 
+        onRefresh={onRefresh}
+      />
+
+      <AssetTagModal
+        isOpen={isTagModalOpen}
+        onOpenChange={(open) => {
+          setIsTagModalOpen(open);
+          if (!open) setSelectedAssetForTag(null);
+        }}
+        asset={selectedAssetForTag}
+      />
     </div>
   );
 }

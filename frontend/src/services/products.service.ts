@@ -40,26 +40,26 @@ export const productsService = {
     if (category) params.append('category', category);
     
     const response = await api.get(`/products?${params.toString()}`);
-    return response.data.data;
+    return response.data;
   },
 
   async getById(id: string) {
     const response = await api.get(`/products/${id}`);
-    return response.data.data;
+    return response.data;
   },
 
   async create(data: CreateProductDto) {
     const response = await api.post('/products', data);
-    return response.data.data;
+    return response.data;
   },
 
   async update(id: string, data: Partial<CreateProductDto>) {
     const response = await api.patch(`/products/${id}`, data);
-    return response.data.data;
+    return response.data;
   },
 
   async delete(id: string) {
     const response = await api.delete(`/products/${id}`);
-    return response.data.data;
+    return response.data;
   },
 };

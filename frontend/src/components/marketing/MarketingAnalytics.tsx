@@ -158,16 +158,16 @@ export function MarketingAnalytics({ summary, channelData, trendData }: Marketin
                     <td className="px-6 py-4">
                        <div className="flex items-center justify-center gap-2">
                          <div className="h-1.5 w-16 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
-                           <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(100, (channel.roi / 1000) * 100)}%` }} />
+                           <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(100, ((channel.roi || 0) / 1000) * 100)}%` }} />
                          </div>
-                         <span className="text-[10px] font-bold text-neutral-400 italic">{(channel.roi / 100).toFixed(1)}x</span>
+                         <span className="text-[10px] font-bold text-neutral-400 italic">{((channel.roi || 0) / 100).toFixed(1)}x</span>
                        </div>
                     </td>
                     <td className="px-6 py-4 text-right font-mono text-neutral-500">
-                      ${channel.spend.toLocaleString()}
+                      ${(channel.spend || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-gray-900 dark:text-white">${(channel.roi * channel.spend / 100).toLocaleString()}</span>
+                      <span className="font-bold text-gray-900 dark:text-white">${(((channel.roi || 0) * (channel.spend || 0)) / 100).toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                        <Badge className={i < 2 ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}>

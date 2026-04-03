@@ -18,11 +18,6 @@ export default function DashboardLayout({
           
           <main className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto w-full">
-              {/* Top Greeting area will be in individual pages, but ModuleNav is global for authenticated routes */}
-              <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-20">
-                <ModuleNav />
-              </div>
-
               <div className="p-4 md:p-6 lg:p-8">
                 {children}
               </div>

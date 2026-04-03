@@ -1,8 +1,8 @@
 export type CustomerTag = 'Retail' | 'Wholesale' | 'VIP' | 'High Risk' | 'Corporate' | 'Distributor';
 
-export type PaymentTerms = 'Net 7' | 'Net 15' | 'Net 30' | 'Due on Receipt' | 'Custom';
+export type PaymentTerms = 'NET_7' | 'NET_15' | 'NET_30' | 'DUE_ON_RECEIPT' | 'CUSTOM';
 
-export type CustomerStatus = 'Active' | 'Inactive' | 'On Hold' | 'Blocked';
+export type CustomerStatus = 'ACTIVE' | 'INACTIVE' | 'ON_HOLD' | 'BLOCKED';
 
 export interface Address {
   street: string;
@@ -57,9 +57,9 @@ export interface Customer {
   contacts: ContactPerson[];
   
   // Addresses
-  billingAddress: Address;
-  shippingAddress: Address;
-  sameAsBilling: boolean;
+  billingAddress: Address | any;
+  shippingAddress: Address | any;
+  sameAsBilling?: boolean;
   
   // Financial Control
   currency: string;

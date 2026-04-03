@@ -1,84 +1,72 @@
+import { api } from './api';
 import type { Account, JournalEntry, LedgerEntry, TrialBalanceRow } from '@/types/accounting';
-import {
-  MOCK_ACCOUNTS, MOCK_JOURNAL_ENTRIES, MOCK_LEDGER_ENTRIES,
-  MOCK_TRIAL_BALANCE, MOCK_ACCOUNTING_SUMMARY, MOCK_PL_DATA, MOCK_CASH_FLOW_DATA,
-} from '@/lib/mock-accounting';
-
-const delay = (ms = 400) => new Promise(r => setTimeout(r, ms));
 
 export const accountingService = {
-  // GET /api/accounts
+  // GET /accounting/accounts
   async getAccounts(): Promise<Account[]> {
-    await delay();
-    return MOCK_ACCOUNTS;
+    const response = await api.get('/accounting/accounts');
+    return response.data;
   },
 
-  // POST /api/accounts
-  async createAccount(data: Partial<Account>): Promise<Account> {
-    await delay(600);
-    console.log('POST /api/accounts', data);
-    return { ...MOCK_ACCOUNTS[0], ...data, id: `acc_${Date.now()}` } as Account;
+  // POST /accounting/accounts
+  async createAccount(data: any): Promise<Account> {
+    const response = await api.post('/accounting/accounts', data);
+    return response.data;
   },
 
-  // PUT /api/accounts/:id
-  async updateAccount(id: string, data: Partial<Account>): Promise<Account> {
-    await delay();
-    console.log(`PUT /api/accounts/${id}`, data);
-    const acc = MOCK_ACCOUNTS.find(a => a.id === id) || MOCK_ACCOUNTS[0];
-    return { ...acc, ...data };
+  // POST /accounting/accounts/:id
+  async updateAccount(id: string, data: any): Promise<Account> {
+    const response = await api.post(`/accounting/accounts/${id}`, data);
+    return response.data;
   },
 
-  // DELETE /api/accounts/:id
-  async deleteAccount(id: string): Promise<void> {
-    await delay();
-    console.log(`DELETE /api/accounts/${id}`);
-  },
-
-  // GET /api/journal-entries
+  // GET /accounting/journal-entries
   async getJournalEntries(): Promise<JournalEntry[]> {
-    await delay();
-    return MOCK_JOURNAL_ENTRIES;
+    const response = await api.get('/accounting/journal-entries');
+    return response.data;
   },
 
-  // POST /api/journal-entries
-  async createJournalEntry(data: Partial<JournalEntry>): Promise<JournalEntry> {
-    await delay(600);
-    console.log('POST /api/journal-entries', data);
-    return { ...MOCK_JOURNAL_ENTRIES[0], ...data, id: `je_${Date.now()}`, entryNo: `JE-${Math.floor(Math.random() * 900 + 100)}` } as JournalEntry;
+  // POST /accounting/journal-entries
+  async createJournalEntry(data: any): Promise<JournalEntry> {
+    const response = await api.post('/accounting/journal-entries', data);
+    return response.data;
   },
 
-  // GET /api/ledger/:accountId
+  // GET /accounting/ledger/:accountId
   async getLedger(accountId: string): Promise<LedgerEntry[]> {
-    await delay();
-    return MOCK_LEDGER_ENTRIES[accountId] || [];
+    const response = await api.get(`/accounting/ledger/${accountId}`);
+    return response.data;
   },
 
-  // GET /api/reports/trial-balance
+  // GET /accounting/reports/trial-balance
   async getTrialBalance(): Promise<TrialBalanceRow[]> {
-    await delay();
-    return MOCK_TRIAL_BALANCE;
+    const response = await api.get('/accounting/reports/trial-balance');
+    return response.data;
   },
 
-  // GET /api/reports/profit-loss
+  // GET /accounting/reports/profit-loss
   async getPLReport() {
-    await delay();
-    return MOCK_PL_DATA;
+    const response = await api.get('/accounting/reports/profit-loss');
+    return response.data;
   },
 
-  // GET /api/reports/balance-sheet
+  // GET /accounting/reports/balance-sheet
   async getBalanceSheet() {
-    await delay();
-    return MOCK_ACCOUNTING_SUMMARY;
-  },
-
-  // GET /api/reports/cash-flow
-  async getCashFlow() {
-    await delay();
-    return MOCK_CASH_FLOW_DATA;
+    const response = await api.get('/accounting/reports/balance-sheet');
+    return response.data;
   },
 
   async getSummary() {
-    await delay();
-    return MOCK_ACCOUNTING_SUMMARY;
+    // Return a composite summary for the dashboard
+    const [pl, bs] = await Promise.all([
+      this.getPLReport(),
+      this.getBalanceSheet(),
+    ]);
+    return {
+      netIncome: pl.netIncome,
+      totalAssets: bs.totalAssets,
+      totalLiabilities: bs.totalLiabilities,
+      totalEquity: bs.totalEquity,
+    };
   },
 };
