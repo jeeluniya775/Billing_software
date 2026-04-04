@@ -18,7 +18,7 @@ export class CreateProductDto {
   description?: string;
 
   @ApiProperty({ example: 'https://example.com/iphone.jpg', required: false })
-  @IsUrl()
+  @IsString()
   @IsOptional()
   imageUrl?: string;
 

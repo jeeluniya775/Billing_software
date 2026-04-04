@@ -16,23 +16,108 @@ export class ProductsService {
     });
   }
 
-  async findAll(tenantId: string, search?: string, category?: string) {
-    return this.prisma.product.findMany({
-      where: {
-        tenantId,
-        isActive: true,
-        AND: [
-          search ? {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { sku: { contains: search, mode: 'insensitive' } },
-            ],
-          } : {},
-          category ? { category } : {},
+  async findAll(
+    tenantId: string,
+    options: {
+      search?: string;
+      category?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      isActive?: boolean;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      page?: number;
+      limit?: number;
+    },
+  ) {
+    const {
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      isActive,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 10,
+    } = options;
+
+    const where: any = {
+      tenantId,
+      AND: [],
+    };
+
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+
+    if (search) {
+      where.AND.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { sku: { contains: search, mode: 'insensitive' } },
         ],
-      },
-      orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    if (category) {
+      where.AND.push({ category });
+    }
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.AND.push({
+        price: {
+          gte: minPrice,
+          lte: maxPrice,
+        },
+      });
+    }
+
+    const [items, total, stats] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.product.count({ where }),
+      this.prisma.product.aggregate({
+        where: { tenantId }, // Stats are always for the whole tenant, not just current search/filters
+        _sum: {
+          stock: true,
+        },
+        _count: {
+          id: true,
+          isActive: true,
+        },
+      }),
+    ]);
+
+    // Calculate total inventory value manually for the whole tenant
+    const allProducts = await this.prisma.product.findMany({
+      where: { tenantId },
+      select: { price: true, stock: true, isActive: true, lowStockAlert: true },
     });
+
+    const totalActive = allProducts.filter(p => p.isActive).length;
+    const totalInventoryValue = allProducts.reduce((acc, p) => acc + (p.price * p.stock), 0);
+    const totalLowStock = allProducts.filter(p => p.stock <= p.lowStockAlert).length;
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        stats: {
+          total: allProducts.length,
+          active: totalActive,
+          lowStock: totalLowStock,
+          totalValue: totalInventoryValue,
+        },
+      },
+    };
   }
 
   async findOne(tenantId: string, id: string) {
