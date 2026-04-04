@@ -109,6 +109,11 @@ export class CreateCustomerDto {
   @ValidateNested({ each: true })
   @Type(() => ContactPersonDto)
   contacts?: ContactPersonDto[];
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  tenantId?: string;
 }
 
 export class UpdateCustomerDto extends CreateCustomerDto {}

@@ -44,12 +44,17 @@ function LoginForm() {
     setIsLoading(true);
     try {
       const { authService } = await import('@/services/auth.service');
-      await authService.login({
+      const response = await authService.login({
         email: values.email,
         password: values.password,
       });
       setIsLoading(false);
-      router.push('/');
+      
+      if (response.user.role === 'CUSTOMER') {
+        router.push('/portal');
+      } else {
+        router.push('/');
+      }
     } catch (error: any) {
       setIsLoading(false);
       alert(error.message || 'Login failed');

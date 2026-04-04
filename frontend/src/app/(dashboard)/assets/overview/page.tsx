@@ -26,7 +26,7 @@ export default function AssetsOverviewPage() {
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
+    <div className="space-y-8 slide-in-from-bottom-2 delay-150">
       {summary && <AssetKpiCards summary={summary} isLoading={isLoading} />}
       {summary && <AssetCharts summary={summary} isLoading={isLoading} />}
     </div>

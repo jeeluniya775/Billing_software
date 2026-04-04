@@ -18,6 +18,7 @@ import { SmartAccountingPanel } from '@/components/accounting/SmartAccountingPan
 import { PageHeader } from '@/components/layout/PageHeader';
 import { accountingService } from '@/services/accounting.service';
 import { AccountingSummary } from '@/types/accounting';
+import { useTenantStore } from '@/store/tenant.store';
 
 type Tab = 'overview' | 'accounts' | 'journal' | 'ledger' | 'trial' | 'reports' | 'settings';
 
@@ -31,39 +32,35 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'settings', label: 'Controls',           icon: Settings2 },
 ];
 
-export default function AccountingPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const [summary, setSummary] = useState<AccountingSummary | null>(null);
-  const [plData, setPlData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+import { useQuery } from '@tanstack/react-query';
 
-  useEffect(() => {
-    async function loadData() {
-      if (activeTab === 'overview') {
-        setIsLoading(true);
-        try {
-          const [summaryData, plReport] = await Promise.all([
-            accountingService.getSummary(),
-            accountingService.getPLReport(),
-          ]);
-          setSummary(summaryData as any);
-          setPlData(plReport);
-        } catch (err) {
-          console.error("Failed to fetch accounting data:", err);
-          setSummary(null);
-          setPlData(null);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    }
-    loadData();
-  }, [activeTab]);
+export default function AccountingPage() {
+  const { selectedTenant } = useTenantStore();
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['accounting-overview', { tenantId: selectedTenant?.id }],
+    queryFn: async () => {
+      const [summaryData, plReport] = await Promise.all([
+        accountingService.getSummary(),
+        accountingService.getPLReport(),
+      ]);
+      return {
+        summary: summaryData as any,
+        plData: plReport,
+      };
+    },
+    enabled: activeTab === 'overview',
+    placeholderData: (previousData) => previousData,
+  });
+
+  const summary = data?.summary || null;
+  const plData = data?.plData || null;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Accounting"
+        title={selectedTenant ? `Accounting: ${selectedTenant.name}` : "Accounting"}
         subtitle="Double-entry bookkeeping · FY 2025-26"
         actions={
           <>

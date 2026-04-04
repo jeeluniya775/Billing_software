@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth.store';
+import { useRouter } from 'next/navigation';
 import { RevenueChart } from '@/components/charts/RevenueChart';
 import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { ProfitLossChart } from '@/components/charts/ProfitLossChart';
@@ -31,9 +32,20 @@ import {
 
 export default function Dashboard() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/landing');
+      return;
+    }
+    if (user.role === 'CUSTOMER') {
+      router.push('/portal');
+    }
+  }, [user, router]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -73,7 +85,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10">
       {/* 1. Greeting */}
       <div className="space-y-2">
         <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">

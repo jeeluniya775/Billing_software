@@ -26,7 +26,7 @@ export default function AssetsLifecyclePage() {
   }, []);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="p-4 md:p-8 space-y-8">
       <AssetLifecycle 
         assets={assets} 
         onRefresh={fetchAssets}

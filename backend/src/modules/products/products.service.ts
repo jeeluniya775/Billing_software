@@ -120,6 +120,48 @@ export class ProductsService {
     };
   }
 
+  async findGlobal(options: any, ownerId?: string) {
+    const { search, category, minPrice, maxPrice } = options;
+    const where: any = {
+      isActive: true,
+      AND: [],
+    };
+
+    if (ownerId) {
+      const ownedTenants = await this.prisma.tenant.findMany({
+        where: { ownerId } as any,
+        select: { id: true }
+      });
+      const tenantIds = ownedTenants.map(t => t.id);
+      where.AND.push({ tenantId: { in: tenantIds } });
+    }
+
+    if (search) {
+      where.AND.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { sku: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+    if (category) where.AND.push({ category });
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.AND.push({
+        price: { gte: minPrice, lte: maxPrice },
+      });
+    }
+
+    return this.prisma.product.findMany({
+      where,
+      include: {
+        tenant: {
+          select: { id: true, name: true, description: true, logoUrl: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findOne(tenantId: string, id: string) {
     const product = await this.prisma.product.findFirst({
       where: { id, tenantId },

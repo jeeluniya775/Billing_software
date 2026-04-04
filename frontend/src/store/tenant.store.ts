@@ -11,6 +11,7 @@ interface TenantState {
   tenants: Tenant[];
   switchTenant: (tenant: Tenant) => void;
   setTenants: (tenants: Tenant[]) => void;
+  setSelectedTenant: (tenant: Tenant | null) => void;
 }
 
 export const useTenantStore = create<TenantState>()(
@@ -20,6 +21,7 @@ export const useTenantStore = create<TenantState>()(
       tenants: [],
       switchTenant: (tenant) => set({ selectedTenant: tenant }),
       setTenants: (tenants) => set({ tenants, selectedTenant: tenants[0] || null }),
+      setSelectedTenant: (tenant) => set({ selectedTenant: tenant }),
     }),
     {
       name: 'tenant-storage',

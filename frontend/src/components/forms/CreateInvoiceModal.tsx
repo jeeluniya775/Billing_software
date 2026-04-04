@@ -40,7 +40,7 @@ const invoiceSchema = z.object({
   items: z.array(invoiceItemSchema).min(1, { message: 'At least one item required.' }),
 });
 
-export function CreateInvoiceModal() {
+export function CreateInvoiceModal({ onSuccess }: { onSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
@@ -70,6 +70,7 @@ export function CreateInvoiceModal() {
     });
     setOpen(false);
     form.reset();
+    if (onSuccess) onSuccess();
   }
 
   const calculateTotal = () => {

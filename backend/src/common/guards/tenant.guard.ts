@@ -11,9 +11,11 @@ export class TenantGuard implements CanActivate {
       throw new ForbiddenException('User tenant context missing');
     }
 
-    // If a header is provided, it must match the user's tenantId
-    if (tenantIdFromHeader && tenantIdFromHeader !== user.tenantId) {
-      throw new ForbiddenException('Tenant mismatch');
+    // If user is not an OWNER, they MUST match their assigned tenantId
+    if (user.role !== 'OWNER') {
+      if (tenantIdFromHeader && tenantIdFromHeader !== user.tenantId) {
+        throw new ForbiddenException('Tenant mismatch: You are restricted to your assigned shop.');
+      }
     }
 
     return true;

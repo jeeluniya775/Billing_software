@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useTenantStore } from '@/store/tenant.store';
 
 // Define Table Columns inline
 const columns = [
@@ -39,9 +40,9 @@ const columns = [
     accessorKey: 'customerName',
     header: 'Customer',
     cell: ({ row }: { row: import('@tanstack/react-table').Row<Sale> }) => (
-      <Link href={`/customers/${row.original.customerId}`} className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline">
+      <span className="font-semibold text-neutral-900 dark:text-white">
         {row.original.customerName}
-      </Link>
+      </span>
     )
   },
   {
@@ -130,45 +131,38 @@ const columns = [
 ];
 
 
+import { useQuery } from '@tanstack/react-query';
+
 export default function SalesPage() {
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [summary, setSummary] = useState<SalesSummaryKPIs | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [trendData, setTrendData] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [pieData, setPieData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { selectedTenant } = useTenantStore();
   const [statusFilter, setStatusFilter] = useState('All');
 
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const [salesRes, summaryRes, analyticsRes] = await Promise.all([
-          salesService.getSales({ status: statusFilter }),
-          salesService.getSummary(),
-          salesService.getAnalytics()
-        ]);
-        setSales(Array.isArray(salesRes) ? salesRes : []);
-        setSummary(summaryRes || null);
-        setTrendData(Array.isArray(analyticsRes?.revenueTrend) ? analyticsRes.revenueTrend : []);
-        setPieData(Array.isArray(analyticsRes?.salesByStatus) ? analyticsRes.salesByStatus : []);
-      } catch (err) {
-        console.error("Failed to load sales dashboard:", err);
-        setSales([]);
-        setSummary(null);
-        setTrendData([]);
-        setPieData([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, [statusFilter]);
+  const { data, isLoading } = useQuery({
+    queryKey: ['sales-dashboard', { tenantId: selectedTenant?.id, status: statusFilter }],
+    queryFn: async () => {
+      const [salesRes, summaryRes, analyticsRes] = await Promise.all([
+        salesService.getSales({ status: statusFilter }),
+        salesService.getSummary(),
+        salesService.getAnalytics()
+      ]);
+      return {
+        sales: Array.isArray(salesRes) ? salesRes : [],
+        summary: summaryRes || null,
+        trendData: Array.isArray(analyticsRes?.revenueTrend) ? analyticsRes.revenueTrend : [],
+        pieData: Array.isArray(analyticsRes?.salesByStatus) ? analyticsRes.salesByStatus : [],
+      };
+    },
+    placeholderData: (previousData) => previousData,
+  });
+
+  const sales = data?.sales || [];
+  const summary = data?.summary || null;
+  const trendData = data?.trendData || [];
+  const pieData = data?.pieData || [];
 
   return (
     <ProtectedRoute>
-      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
@@ -176,7 +170,9 @@ export default function SalesPage() {
                <div className="h-10 w-10 bg-indigo-950 dark:bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                   <ShoppingCart className="h-6 w-6" />
                </div>
-               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Sales & Revenue</h1>
+               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">
+                 {selectedTenant ? `${selectedTenant.name} Sales` : "Sales & Revenue"}
+               </h1>
             </div>
             <p className="text-xs font-bold text-neutral-400 uppercase tracking-[0.2em] italic ml-1.5 flex items-center gap-2">
                Comprehensive dashboard for managing invoices and revenue tracking <Sparkles className="h-3 w-3 text-indigo-400" />

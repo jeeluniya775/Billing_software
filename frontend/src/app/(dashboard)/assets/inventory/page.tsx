@@ -26,7 +26,7 @@ export default function AssetsInventoryPage() {
   }, []);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="p-4 md:p-8 space-y-8">
       <AssetTable assets={assets} onRefresh={fetchAssets} />
     </div>
   );

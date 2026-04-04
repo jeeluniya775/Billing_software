@@ -1,16 +1,5 @@
 import { api } from './api';
-
-export interface Customer {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  company?: string;
-  taxId?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Customer } from '@/types/customer';
 
 export const customersService = {
   /**
@@ -21,6 +10,14 @@ export const customersService = {
     if (search) query.append('search', search);
     
     const response = await api.get(`/sales/customers?${query.toString()}`);
+    return response.data;
+  },
+
+  getGlobalCustomers: async (search?: string): Promise<Customer[]> => {
+    const query = new URLSearchParams();
+    if (search) query.append('search', search);
+    
+    const response = await api.get(`/sales/customers/global?${query.toString()}`);
     return response.data;
   },
 

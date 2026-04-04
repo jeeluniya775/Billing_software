@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth.store';
 import {
   Plus,
   Bookmark,
@@ -24,6 +25,11 @@ import {
   ChevronRight,
   X,
   Menu,
+  Settings,
+  Store,
+  ShoppingBag,
+  UserCircle,
+  Globe
 } from 'lucide-react';
 
 // Top action items (icon only)
@@ -42,12 +48,24 @@ const pinnedItems = [
   { label: 'Accounting',  icon: Calculator,   href: '/accounting' },
   { label: 'Expenses',    icon: Receipt,       href: '/expenses' },
   { label: 'Sales',       icon: ShoppingCart,  href: '/sales' },
-  { label: 'Customers',   icon: Users,         href: '/customers' },
   { label: 'Marketing',   icon: Megaphone,     href: '/marketing' },
   { label: 'Payroll',     icon: Wallet,        href: '/payroll' },
   { label: 'Team',        icon: UserSquare2,   href: '/team' },
   { label: 'Time',        icon: Clock,         href: '/time' },
   { label: 'Assets',      icon: Package,       href: '/assets' },
+  { label: 'Settings',    icon: Settings,      href: '/settings' },
+];
+
+// Owner specific items
+const ownerItems = [
+  { label: 'Portfolio Catalog', icon: Package,     href: '/products/portfolio' },
+];
+
+// Customer specific items
+const customerItems = [
+  { label: 'Marketplace', icon: Store,       href: '/portal' },
+  { label: 'My Purchases',icon: ShoppingBag,  href: '/portal?tab=orders' },
+  { label: 'My Profile',  icon: UserCircle,   href: '/settings' },
 ];
 
 interface SidebarProps {
@@ -58,8 +76,32 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuthStore();
+  const role = user?.role;
 
-  const isActive = (href?: string) => href && pathname === href;
+  const isActive = (href?: string) => {
+    if (!href) return false;
+    // Exact match for the active path
+    return pathname === href;
+  };
+
+  // Filter navigation items based on role
+  const allowedPinnedItems = role === 'OWNER' ? [...ownerItems, ...pinnedItems] : role === 'CUSTOMER' ? customerItems : pinnedItems;
+
+  const allowedTopActions = topActions.map(item => {
+    if (item.id === 'dashboard' && role === 'OWNER') {
+      return { ...item, label: 'Global Portfolio', href: '/consolidated', icon: Globe };
+    }
+    if (role === 'CUSTOMER') {
+       if (item.id === 'dashboard') return { ...item, label: 'Marketplace', href: '/portal', icon: Store };
+    }
+    return item;
+  }).filter(item => {
+    if (role === 'CUSTOMER') {
+      return ['dashboard', 'reports'].includes(item.id);
+    }
+    return true;
+  });
 
   const sidebarContent = (
     <div className={cn(
@@ -72,7 +114,7 @@ export function Sidebar({ className }: SidebarProps) {
         collapsed ? 'justify-center' : 'justify-between'
       )}>
         {!collapsed && (
-          <span className="text-sm font-bold text-emerald-600 tracking-tight">BillFast</span>
+          <span className="text-sm font-black text-emerald-600 tracking-tighter uppercase">BillFast</span>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -85,7 +127,7 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Top Icon Actions */}
       <div className="flex flex-col gap-1 px-2 pt-3 pb-2 shrink-0">
-        {topActions.map((item) => {
+        {allowedTopActions.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           const content = item.href ? (
@@ -112,7 +154,7 @@ export function Sidebar({ className }: SidebarProps) {
               ) : (
                 <Icon className={cn('shrink-0', collapsed ? 'h-4.5 w-4.5' : 'h-4 w-4')} />
               )}
-              {!collapsed && <span className="text-[13px] font-medium">{item.label}</span>}
+              {!collapsed && <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>}
             </Link>
           ) : (
             <button
@@ -135,30 +177,30 @@ export function Sidebar({ className }: SidebarProps) {
               ) : (
                 <Icon className="h-4 w-4 shrink-0" />
               )}
-              {!collapsed && <span className="text-[13px] font-medium">{item.label}</span>}
+              {!collapsed && <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>}
             </button>
           );
 
-          return item.href ? content : content;
+          return content;
         })}
       </div>
 
-      {/* Divider + PINNED section */}
+      {/* Divider + NAVIGATION section */}
       <div className="shrink-0 px-3 py-1">
         <div className="border-t border-neutral-100 dark:border-neutral-800" />
       </div>
 
       {!collapsed && (
-        <p className="px-4 pt-1 pb-1.5 text-[10px] font-semibold tracking-widest text-neutral-400 dark:text-neutral-500 uppercase">
-          Pinned
+        <p className="px-4 pt-4 pb-1.5 text-[9px] font-black tracking-[0.2em] text-neutral-400 dark:text-neutral-500 uppercase italic">
+          {role === 'CUSTOMER' ? 'Shopping' : 'Business Units'}
         </p>
       )}
 
       {/* Pinned nav items */}
       <nav className="flex flex-col gap-0.5 px-2 overflow-y-auto hide-scrollbar flex-1">
-        {pinnedItems.map((item) => {
+        {allowedPinnedItems.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href;
+          const active = isActive(item.href);
           return (
             <Link
               key={item.label}
@@ -168,7 +210,7 @@ export function Sidebar({ className }: SidebarProps) {
                 'flex items-center gap-3 rounded-xl transition-all duration-150 group',
                 collapsed ? 'justify-center w-9 h-9 mx-auto' : 'px-2.5 py-2 w-full',
                 active
-                  ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold'
                   : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-white',
               )}
             >
@@ -176,13 +218,13 @@ export function Sidebar({ className }: SidebarProps) {
                 'flex items-center justify-center rounded-lg shrink-0',
                 collapsed ? 'w-7 h-7' : 'w-6 h-6',
                 active
-                  ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400'
+                  ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 shadow-sm'
                   : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 group-hover:text-neutral-700 dark:group-hover:text-neutral-200'
               )}>
                 <Icon className="h-3.5 w-3.5" />
               </span>
               {!collapsed && (
-                <span className="text-[13px] truncate">{item.label}</span>
+                <span className="text-[11px] font-bold uppercase tracking-widest truncate">{item.label}</span>
               )}
             </Link>
           );
@@ -196,7 +238,7 @@ export function Sidebar({ className }: SidebarProps) {
         {!collapsed ? (
           <button className="flex items-center gap-2 w-full px-2.5 py-2 rounded-xl text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors">
             <Grid2X2 className="h-4 w-4 shrink-0" />
-            <span className="text-[13px] font-medium">Customize</span>
+            <span className="text-[11px] font-black uppercase tracking-widest">Customize</span>
           </button>
         ) : (
           <button className="flex items-center justify-center w-9 h-9 mx-auto rounded-xl text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors" title="Customize">
@@ -243,13 +285,13 @@ export function Sidebar({ className }: SidebarProps) {
             </button>
             <div className="flex flex-col h-full bg-white dark:bg-neutral-900 border-r border-neutral-100 dark:border-neutral-800 w-[200px]">
               <div className="flex items-center justify-between h-14 px-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
-                <span className="text-sm font-bold text-emerald-600 tracking-tight">BillFast</span>
+                <span className="text-sm font-black text-emerald-600 tracking-tighter uppercase">BillFast</span>
                 <button onClick={() => setMobileOpen(false)} className="p-1 rounded text-neutral-400">
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex flex-col gap-1 px-2 pt-3 pb-2 shrink-0">
-                {topActions.map((item) => {
+                {allowedTopActions.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
                   return item.href ? (
@@ -261,7 +303,7 @@ export function Sidebar({ className }: SidebarProps) {
                       {item.isCircle
                         ? <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white"><Icon className="h-3.5 w-3.5" /></span>
                         : <Icon className="h-4 w-4 shrink-0" />}
-                      <span className="text-[13px] font-medium">{item.label}</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
                     </Link>
                   ) : (
                     <button key={item.id}
@@ -269,22 +311,24 @@ export function Sidebar({ className }: SidebarProps) {
                       {item.isCircle
                         ? <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white"><Icon className="h-3.5 w-3.5" /></span>
                         : <Icon className="h-4 w-4 shrink-0" />}
-                      <span className="text-[13px] font-medium">{item.label}</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
                     </button>
                   );
                 })}
               </div>
               <div className="px-3 py-1"><div className="border-t border-neutral-100 dark:border-neutral-800" /></div>
-              <p className="px-4 pt-1 pb-1.5 text-[10px] font-semibold tracking-widest text-neutral-400 uppercase">Pinned</p>
+              <p className="px-4 pt-4 pb-1.5 text-[9px] font-black tracking-[0.2em] text-neutral-400 uppercase italic">
+                 {role === 'CUSTOMER' ? 'Shopping' : 'Business Units'}
+              </p>
               <nav className="flex flex-col gap-0.5 px-2 overflow-y-auto hide-scrollbar flex-1">
-                {pinnedItems.map((item) => {
+                {allowedPinnedItems.map((item) => {
                   const Icon = item.icon;
-                  const active = pathname === item.href;
+                  const active = isActive(item.href);
                   return (
                     <Link key={item.label} href={item.href} onClick={() => setMobileOpen(false)}
                       className={cn(
                         'flex items-center gap-3 px-2.5 py-2 w-full rounded-xl transition-all',
-                        active ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800',
+                        active ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-800',
                       )}>
                       <span className={cn(
                         'flex items-center justify-center w-6 h-6 rounded-lg shrink-0',
@@ -292,7 +336,7 @@ export function Sidebar({ className }: SidebarProps) {
                       )}>
                         <Icon className="h-3.5 w-3.5" />
                       </span>
-                      <span className="text-[13px] truncate">{item.label}</span>
+                      <span className="text-[11px] font-bold uppercase tracking-widest truncate">{item.label}</span>
                     </Link>
                   );
                 })}

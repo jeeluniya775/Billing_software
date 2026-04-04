@@ -78,7 +78,7 @@ export default function AssetsAnalyticsPage() {
   const depPercent = summary && summary.totalValue > 0 ? Math.round((summary.depreciatedValue / summary.totalValue) * 1000) / 10 : 0;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="space-y-8 slide-in-from-bottom-2">
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-neutral-900 p-4 rounded-2xl border border-neutral-100 dark:border-neutral-800 shadow-sm">
         <div className="flex items-center gap-3">

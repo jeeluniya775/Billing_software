@@ -17,6 +17,7 @@ import { TimeModule } from './modules/time/time.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { TenantsModule } from './modules/tenants/tenants.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { join } from 'path';
     PayrollModule,
     AssetsModule,
     TimeModule,
+    TenantsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
