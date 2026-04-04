@@ -52,7 +52,7 @@ export default function MarketingPage() {
 
   return (
     <ProtectedRoute>
-      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">

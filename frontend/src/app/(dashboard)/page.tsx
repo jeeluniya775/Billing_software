@@ -85,7 +85,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10">
       {/* 1. Greeting */}
       <div className="space-y-2">
         <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">

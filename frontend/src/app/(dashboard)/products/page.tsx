@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useTransition } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { productsService, Product } from '@/services/products.service';
 import { ProductModal } from '@/components/products/ProductModal';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -67,12 +68,6 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
 export default function ProductsPage() {
   const { toast } = useToast();
   const { selectedTenant } = useTenantStore();
-  // Data State
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   
   // Filter/Sort/Pagination State
   const [search, setSearch] = useState('');
@@ -88,58 +83,30 @@ export default function ProductsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // KPIS
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    lowStock: 0,
-    totalValue: 0,
+  // React Query Fetching
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['products', { 
+      tenantId: selectedTenant?.id, 
+      search, category, status, minPrice, maxPrice, page, sortBy, sortOrder 
+    }],
+    queryFn: () => productsService.getAll({
+      search,
+      category: category === 'all' ? undefined : category,
+      isActive: status === 'all' ? undefined : status === 'active',
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      page,
+      limit: DEFAULT_PAGE_SIZE,
+      sortBy,
+      sortOrder,
+    }),
+    placeholderData: (previousData: any) => previousData, // Maintain UI during background refresh
   });
 
-  const fetchProducts = useCallback(async () => {
-    // Only show full loading the very first time (when list is empty)
-    if (products.length === 0) setIsLoading(true);
-    
-    try {
-      const response = await productsService.getAll({
-        search,
-        category: category === 'all' ? undefined : category,
-        isActive: status === 'all' ? undefined : status === 'active',
-        minPrice: minPrice ? Number(minPrice) : undefined,
-        maxPrice: maxPrice ? Number(maxPrice) : undefined,
-        page,
-        limit: DEFAULT_PAGE_SIZE,
-        sortBy,
-        sortOrder,
-      });
-
-      // Use React 18 Transitions for the background update.
-      // This is the GOLDEN RULE for fixing 'removeChild' errors: 
-      // Defer state-driven data updates until more urgent UI tasks (like modal closings) are handled.
-      startTransition(() => {
-        setProducts(response.items);
-        setTotal(response.meta.total);
-        setTotalPages(response.meta.totalPages);
-        
-        if (response.meta.stats) {
-          setStats(response.meta.stats);
-        }
-      });
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
-      toast({
-        title: "Connection Error",
-        description: "Could not sync with the inventory server.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [search, category, status, minPrice, maxPrice, page, sortBy, sortOrder, toast, products.length, selectedTenant?.id]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  const products = data?.items || [];
+  const total = data?.meta?.total || 0;
+  const totalPages = data?.meta?.totalPages || 1;
+  const stats = data?.meta?.stats || { total: 0, active: 0, lowStock: 0, totalValue: 0 };
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -160,7 +127,7 @@ export default function ProductsPage() {
       });
       // Extended Safety Delay: Wait for Radix portals to be 100% unmounted.
       setTimeout(() => {
-        fetchProducts();
+        refetch();
       }, 300);
     } catch (error) {
       toast({
@@ -200,7 +167,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8">
       <PageHeader 
         title={selectedTenant ? `Catalog: ${selectedTenant.name}` : "Product Inventory"}
         subtitle="Manage your catalog, prices, and stock levels."
@@ -209,7 +176,7 @@ export default function ProductsPage() {
             <Button variant="outline" className="h-12 rounded-xl border-neutral-200 dark:border-neutral-800 font-bold uppercase tracking-widest text-[10px] px-6 hover:bg-neutral-50">
               <Download className="h-4 w-4 mr-2" /> Export Data
             </Button>
-            <ProductModal onSuccess={fetchProducts} />
+            <ProductModal onSuccess={refetch} />
           </div>
         }
       />
@@ -222,9 +189,9 @@ export default function ProductsPage() {
           { label: 'Low Stock Alerts', value: stats.lowStock, icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50/50', trend: 'Items requiring restock' },
           { label: 'Inventory Value', value: `$${stats.totalValue.toLocaleString()}`, icon: DollarSign, color: 'text-blue-600', bg: 'bg-blue-50/50', trend: 'Total inventory valuation' },
         ].map((kpi, i) => (
-          <div key={i} className="bg-white dark:bg-zinc-900/50 p-6 rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 overflow-hidden group">
-            <div className="flex items-center gap-5 relative z-10">
-              <div className={cn("h-16 w-16 rounded-[1.75rem] flex items-center justify-center transition-transform duration-500 group-hover:scale-110", kpi.bg)}>
+          <div key={i} className="bg-white dark:bg-zinc-900/50 p-6 rounded-[2.5rem] border border-neutral-100 dark:border-neutral-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden group">
+            <div className="h-full space-y-8">
+              <div className={cn("h-16 w-16 rounded-[1.75rem] flex items-center justify-center transition-transform group-hover:scale-110", kpi.bg)}>
                 <kpi.icon className={cn("h-8 w-8", kpi.color)} />
               </div>
               <div className="flex flex-col">
@@ -235,7 +202,7 @@ export default function ProductsPage() {
             </div>
             
             {/* Subtle background decoration */}
-            <div className={cn("absolute -right-4 -bottom-4 h-24 w-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700", kpi.bg)} />
+            <div className={cn("absolute -right-4 -bottom-4 h-24 w-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity", kpi.bg)} />
           </div>
         ))}
       </div>
@@ -315,10 +282,10 @@ export default function ProductsPage() {
         {/* Table Container */}
         <div className="relative overflow-x-auto min-h-[500px]">
           {/* Background Sync Overlay (Safely outside the table hierarchy) */}
-          {(isLoading || isPending) && products.length > 0 && (
+          {isLoading && products.length > 0 && (
             <div className="absolute inset-0 bg-white/[0.02] dark:bg-black/[0.02] backdrop-blur-[1px] z-20 flex items-start justify-center pt-20 pointer-events-none">
-              <div className="bg-white dark:bg-zinc-900 shadow-2xl rounded-full px-6 py-3 flex items-center gap-3 border border-neutral-100 dark:border-neutral-800 animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="h-4 w-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <div className="bg-white dark:bg-zinc-900 shadow-2xl rounded-full px-6 py-3 flex items-center gap-3 border border-neutral-100 dark:border-neutral-800">
+                <div className="h-4 w-4 border-2 border-emerald-500 border-t-transparent rounded-full" />
                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-neutral-500">Updating Catalog...</span>
               </div>
             </div>
@@ -378,13 +345,13 @@ export default function ProductsPage() {
               )}
 
               {/* Data Rows */}
-              {products.map((product) => (
+              {products.map((product: Product) => (
                 <TableRow 
                   key={product.id} 
                   className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30 transition-all group h-24"
                 >
                   <TableCell className="pl-8">
-                    <div className="h-16 w-16 rounded-[1.25rem] bg-neutral-100 dark:bg-neutral-800 relative overflow-hidden border border-neutral-100 dark:border-neutral-800 group-hover:scale-110 transition-transform duration-500">
+                    <div className="h-16 w-16 rounded-[1.25rem] bg-neutral-100 dark:bg-neutral-800 relative overflow-hidden border border-neutral-100 dark:border-neutral-800 group-hover:scale-110 transition-transform">
                       {product.imageUrl && isValidUrl(product.imageUrl) ? (
                         <ProductImage src={product.imageUrl} alt={product.name} />
                       ) : (
@@ -497,7 +464,7 @@ export default function ProductsPage() {
           setOpen={setIsEditModalOpen}
           onSuccess={() => {
             setIsEditModalOpen(false);
-            fetchProducts();
+            refetch();
           }}
         />
       )}

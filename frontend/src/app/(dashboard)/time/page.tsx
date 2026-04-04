@@ -39,7 +39,7 @@ export default function TimeTrackingPage() {
 
   return (
     <ProtectedRoute>
-      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+      <div className="p-4 md:p-10 space-y-12">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
@@ -87,23 +87,23 @@ export default function TimeTrackingPage() {
               </TabsList>
            </div>
 
-           <TabsContent value="overview" className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 outline-none">
+           <TabsContent value="overview" className="space-y-8 slide-in-from-bottom-2 outline-none">
               {summary && <TimeCharts summary={summary} isLoading={isLoading} />}
            </TabsContent>
 
-           <TabsContent value="entries" className="animate-in fade-in slide-in-from-bottom-2 duration-500 outline-none">
+           <TabsContent value="entries" className="animate-in fade-in slide-in-from-bottom-2 outline-none">
               <TimeEntryTable />
            </TabsContent>
 
-           <TabsContent value="timesheets" className="animate-in fade-in slide-in-from-bottom-2 duration-500 outline-none">
+           <TabsContent value="timesheets" className="animate-in fade-in slide-in-from-bottom-2 outline-none">
               <TimesheetView />
            </TabsContent>
 
-           <TabsContent value="projects" className="animate-in fade-in slide-in-from-bottom-2 duration-500 outline-none">
+           <TabsContent value="projects" className="animate-in fade-in slide-in-from-bottom-2 outline-none">
               <ProjectTimeIntegration />
            </TabsContent>
 
-           <TabsContent value="attendance" className="animate-in fade-in slide-in-from-bottom-2 duration-500 outline-none">
+           <TabsContent value="attendance" className="animate-in fade-in slide-in-from-bottom-2 outline-none">
               <AttendanceIntegration />
            </TabsContent>
         </Tabs>

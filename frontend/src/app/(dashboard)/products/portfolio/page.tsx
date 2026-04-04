@@ -69,7 +69,7 @@ export default function PortfolioCatalogPage() {
   );
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-8 animate-in fade-in duration-1000">
+    <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-8">
       <PageHeader 
         title="Portfolio Catalog"
         subtitle="Unified inventory database across all business units."

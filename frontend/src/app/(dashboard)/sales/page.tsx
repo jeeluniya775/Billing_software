@@ -131,46 +131,38 @@ const columns = [
 ];
 
 
+import { useQuery } from '@tanstack/react-query';
+
 export default function SalesPage() {
   const { selectedTenant } = useTenantStore();
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [summary, setSummary] = useState<SalesSummaryKPIs | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [trendData, setTrendData] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [pieData, setPieData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('All');
 
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const [salesRes, summaryRes, analyticsRes] = await Promise.all([
-          salesService.getSales({ status: statusFilter }),
-          salesService.getSummary(),
-          salesService.getAnalytics()
-        ]);
-        setSales(Array.isArray(salesRes) ? salesRes : []);
-        setSummary(summaryRes || null);
-        setTrendData(Array.isArray(analyticsRes?.revenueTrend) ? analyticsRes.revenueTrend : []);
-        setPieData(Array.isArray(analyticsRes?.salesByStatus) ? analyticsRes.salesByStatus : []);
-      } catch (err) {
-        console.error("Failed to load sales dashboard:", err);
-        setSales([]);
-        setSummary(null);
-        setTrendData([]);
-        setPieData([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, [statusFilter, selectedTenant?.id]);
+  const { data, isLoading } = useQuery({
+    queryKey: ['sales-dashboard', { tenantId: selectedTenant?.id, status: statusFilter }],
+    queryFn: async () => {
+      const [salesRes, summaryRes, analyticsRes] = await Promise.all([
+        salesService.getSales({ status: statusFilter }),
+        salesService.getSummary(),
+        salesService.getAnalytics()
+      ]);
+      return {
+        sales: Array.isArray(salesRes) ? salesRes : [],
+        summary: summaryRes || null,
+        trendData: Array.isArray(analyticsRes?.revenueTrend) ? analyticsRes.revenueTrend : [],
+        pieData: Array.isArray(analyticsRes?.salesByStatus) ? analyticsRes.salesByStatus : [],
+      };
+    },
+    placeholderData: (previousData) => previousData,
+  });
+
+  const sales = data?.sales || [];
+  const summary = data?.summary || null;
+  const trendData = data?.trendData || [];
+  const pieData = data?.pieData || [];
 
   return (
     <ProtectedRoute>
-      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">

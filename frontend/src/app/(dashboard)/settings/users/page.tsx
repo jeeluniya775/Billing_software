@@ -81,7 +81,7 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
       <PageHeader 
         title="Access & Security"
         subtitle={`Managing personnel for ${selectedTenant?.name}`}
@@ -97,7 +97,7 @@ export default function UserManagementPage() {
       />
 
       {showAddForm && (
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-3xl p-8 shadow-2xl shadow-neutral-200/50 dark:shadow-none animate-in slide-in-from-top-4 duration-300">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-3xl p-8 shadow-2xl shadow-neutral-200/50 dark:shadow-none animate-in slide-in-from-top-4">
           <div className="flex items-center gap-3 mb-8">
              <div className="h-1 w-12 bg-emerald-600 rounded-full" />
              <h3 className="text-xl font-black text-neutral-900 dark:text-white uppercase tracking-tighter">Onboard New Member</h3>

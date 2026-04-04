@@ -96,11 +96,11 @@ export default function ConsolidatedDashboard() {
   );
 
   return (
-    <div className="space-y-10 max-w-[1600px] mx-auto p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <div className="space-y-10 max-w-[1600px] mx-auto p-4 md:p-8">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-neutral-100 dark:border-neutral-800">
         <div className="space-y-1">
-           <div className="flex items-center gap-3 mb-2">
+           <div className="h-full space-y-8">
               <div className="h-2 w-16 bg-emerald-600 rounded-full" />
               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Global Ecosystem</h1>
            </div>
@@ -188,7 +188,7 @@ export default function ConsolidatedDashboard() {
                <Card key={shop.id} className="p-8 rounded-[2.5rem] border-neutral-100 dark:border-neutral-800 hover:shadow-2xl hover:-translate-y-1 transition-all group bg-white dark:bg-neutral-900">
                  <div className="flex items-center justify-between mb-8">
                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500">
+                      <div className="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
                         <Store className="h-6 w-6" />
                       </div>
                       <div className="space-y-1">

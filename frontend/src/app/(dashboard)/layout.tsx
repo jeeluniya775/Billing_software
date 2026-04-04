@@ -39,7 +39,7 @@ export default function DashboardLayout({
                 <ModuleNav />
               </div>
 
-              <div className="p-6 md:p-8" key={selectedTenant?.id}>
+              <div className="p-6 md:p-8">
                 {children}
               </div>
             </div>

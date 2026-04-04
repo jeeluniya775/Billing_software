@@ -66,7 +66,7 @@ export default function SettingsHubPage() {
   });
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
       <PageHeader 
         title="Settings Hub"
         subtitle="Configure your shop operational core"
@@ -80,7 +80,7 @@ export default function SettingsHubPage() {
           const CardContent = (
             <div className={`
               group relative bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 p-8 rounded-[2rem] 
-              transition-all duration-300 overflow-hidden
+              transition-all overflow-hidden
               ${isActive ? 'hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/5' : 'opacity-60 cursor-not-allowed'}
             `}>
               <div className="flex items-start justify-between">

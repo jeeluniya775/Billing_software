@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { MOCK_EXPENSES, MOCK_EXPENSE_SUMMARY, MOCK_EXPENSE_ANALYTICS, EXPENSE_CATEGORIES } from '@/lib/mock-expenses';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { MOCK_EXPENSE_SUMMARY, MOCK_EXPENSE_ANALYTICS, EXPENSE_CATEGORIES } from '@/lib/mock-expenses';
 import type { Expense, ExpenseStatus, PaymentMethod, ExpenseSummary } from '@/types/expense';
 import { expensesService } from '@/services/expenses.service';
 import { ExpenseKpiCards } from '@/components/expenses/ExpenseKpiCards';
@@ -43,6 +44,25 @@ const PAGE_SIZE = 8;
 
 export default function ExpensesPage() {
   const { selectedTenant } = useTenantStore();
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['expenses-dashboard', { tenantId: selectedTenant?.id }],
+    queryFn: async () => {
+      const [list, summ] = await Promise.all([
+        expensesService.getExpenses(),
+        expensesService.getExpenseSummary(),
+      ]);
+      return {
+        expenses: Array.isArray(list) ? list : [],
+        summary: summ,
+      };
+    },
+    placeholderData: (previousData: any) => previousData,
+  });
+
+  const expenses = data?.expenses || [];
+  const summary = data?.summary || null;
+
   // Table state
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -56,32 +76,8 @@ export default function ExpensesPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [summary, setSummary] = useState<ExpenseSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const [list, summ] = await Promise.all([
-        expensesService.getExpenses(),
-        expensesService.getExpenseSummary(),
-      ]);
-      setExpenses(Array.isArray(list) ? list : []);
-      setSummary(summ);
-    } catch (err) {
-      console.error('Failed to load expenses', err);
-      setExpenses([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [selectedTenant?.id]);
-
-  const handleRefresh = () => loadData();
+  const handleRefresh = () => refetch();
 
   const filtered = useMemo(() => {
     let list = Array.isArray(expenses) ? [...expenses] : [];
@@ -115,13 +111,15 @@ export default function ExpensesPage() {
   };
 
   const handleBulkMarkPaid = () => {
-    setExpenses(prev => prev.map(e => selected.has(e.id) ? { ...e, status: 'Paid' as ExpenseStatus } : e));
+    // In a real app, this would be a mutation. For now, we'll just toast and refetch.
     setSelected(new Set());
+    refetch();
   };
 
   const handleBulkDelete = () => {
-    setExpenses(prev => prev.filter(e => !selected.has(e.id)));
+    // In a real app, this would be a mutation. 
     setSelected(new Set());
+    refetch();
   };
 
   const SortIcon = ({ field }: { field: keyof Expense }) => (
@@ -139,7 +137,7 @@ export default function ExpensesPage() {
 
   return (
     <ProtectedRoute>
-      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">
+      <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
@@ -247,7 +245,7 @@ export default function ExpensesPage() {
 
                 {/* Filter Row */}
                 {showFilters && (
-                  <div className="px-6 pb-6 pt-2 border-b border-neutral-100 dark:border-neutral-800 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 animate-in slide-in-from-top-2 duration-300">
+                  <div className="px-6 pb-6 pt-2 border-b border-neutral-100 dark:border-neutral-800 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 animate-in slide-in-from-top-2">
                     <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(1); }}>
                       <SelectTrigger className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-xl border-neutral-100 bg-neutral-50"><SelectValue placeholder="Status" /></SelectTrigger>
                       <SelectContent>
