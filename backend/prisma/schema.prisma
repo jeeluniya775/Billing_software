@@ -12,7 +12,14 @@ datasource db {
 // Tenant (Company)
 model Tenant {
   id        String   @id @default(uuid())
-  name      String
+  name          String
+  email         String?
+  phone         String?
+  businessType  String?
+  description   String?
+  logoUrl       String?
+  address       Json?     // Stores street, city, state, zip, country
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   users     User[]
@@ -29,6 +36,9 @@ model Tenant {
   payroll   PayrollRecord[]
   timeEntries TimeEntry[]
   maintenanceRecords MaintenanceRecord[]
+  
+  ownerId   String?
+  owner     User?    @relation("TenantOwner", fields: [ownerId], references: [id])
 }
 
 // User (Admin, Accountant, Staff)
@@ -42,6 +52,9 @@ model User {
   role      Role     @default(STAFF)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  ownedTenants Tenant[] @relation("TenantOwner")
+  customerProfiles Customer[]
 
   @@unique([email, tenantId])
 }
@@ -113,6 +126,9 @@ model Customer {
   
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id])
 
   @@unique([email, tenantId])
 }
@@ -201,6 +217,8 @@ enum Role {
   ADMIN
   ACCOUNTANT
   STAFF
+  OWNER
+  CUSTOMER
 }
 
 // --- Accounting Module ---

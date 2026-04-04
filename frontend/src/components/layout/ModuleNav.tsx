@@ -13,12 +13,12 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuthStore } from '@/store/auth.store';
 
 const modules = [
   { name: 'Accounting', path: '/accounting', icon: Calculator },
   { name: 'Expenses & Pay Bills', path: '/expenses', icon: CreditCard },
   { name: 'Sales & Get Paid', path: '/sales', icon: TrendingUp },
-  { name: 'Customers', path: '/customers', icon: Users },
   { name: 'Marketing', path: '/marketing', icon: Megaphone },
   { name: 'Payroll', path: '/payroll', icon: Wallet },
   { name: 'Team', path: '/team', icon: UserCog },
@@ -28,6 +28,10 @@ const modules = [
 
 export function ModuleNav() {
   const pathname = usePathname();
+  const { user } = useAuthStore();
+
+  // Hide for customers
+  if (user?.role === 'CUSTOMER') return null;
 
   return (
     <div className="w-full overflow-x-auto pb-4 pt-2 hide-scrollbar">

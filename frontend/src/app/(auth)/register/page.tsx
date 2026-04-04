@@ -48,7 +48,7 @@ export default function RegisterPage() {
         name: values.name,
         email: values.email,
         password: values.password,
-        tenantName: values.company,
+        companyName: values.company,
       });
       setIsLoading(false);
       router.push('/');

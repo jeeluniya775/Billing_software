@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
 };
 
+import { Toaster } from 'sonner';
+
 export default function RootLayout({
   children,
 }: {
@@ -19,6 +21,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className={`${inter.className} min-h-screen bg-white dark:bg-neutral-900 overflow-hidden`}>
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

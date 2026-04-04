@@ -19,6 +19,17 @@ export class ProductsController {
     return this.productsService.create(user.tenantId, createProductDto);
   }
 
+  @Get('global')
+  @ApiOperation({ summary: 'List all products across all tenants' })
+  findGlobal(
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('minPrice') minPrice?: number,
+    @Query('maxPrice') maxPrice?: number,
+  ) {
+    return this.productsService.findGlobal({ search, category, minPrice, maxPrice });
+  }
+
   @Get()
   @ApiOperation({ summary: 'List all products' })
   @ApiQuery({ name: 'search', required: false })

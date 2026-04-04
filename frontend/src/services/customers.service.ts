@@ -13,6 +13,14 @@ export const customersService = {
     return response.data;
   },
 
+  getGlobalCustomers: async (search?: string): Promise<Customer[]> => {
+    const query = new URLSearchParams();
+    if (search) query.append('search', search);
+    
+    const response = await api.get(`/sales/customers/global?${query.toString()}`);
+    return response.data;
+  },
+
   /**
    * GET /sales/customers/:id
    */

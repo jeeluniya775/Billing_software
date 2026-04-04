@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
@@ -26,6 +26,15 @@ export class SalesController {
   @ApiQuery({ name: 'search', required: false })
   findAllCustomers(@CurrentUser() user: any, @Query('search') search?: string) {
     return this.salesService.findAllCustomers(user.tenantId, search);
+  }
+
+  @Get('customers/global')
+  @ApiOperation({ summary: 'List all customers across all shops (Owner only)' })
+  findAllGlobalCustomers(@CurrentUser() user: any, @Query('search') search?: string) {
+    if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
+      throw new UnauthorizedException('Insufficient permissions.');
+    }
+    return this.salesService.findAllGlobalCustomers(user.id, search);
   }
 
   @Get('customers/:id')
@@ -97,5 +106,29 @@ export class SalesController {
   @ApiOperation({ summary: 'Delete invoice' })
   removeInvoice(@CurrentUser() user: any, @Param('id') id: string) {
     return this.salesService.removeInvoice(user.tenantId, id);
+  }
+
+  @Get('consolidated-analytics')
+  @ApiOperation({ summary: 'Get consolidated analytics for owner' })
+  getConsolidatedAnalytics(@CurrentUser() user: any) {
+    if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
+      throw new UnauthorizedException('Insufficient permissions.');
+    }
+    return this.salesService.getConsolidatedAnalytics(user.id);
+  }
+
+  @Get('portal/invoices')
+  @ApiOperation({ summary: 'Get invoices for customer portal' })
+  getCustomerInvoices(@CurrentUser() user: any) {
+    return this.salesService.findInvoicesForCustomer(user.id);
+  }
+
+  @Post('portal/orders')
+  @ApiOperation({ summary: 'Place order from customer portal' })
+  createPortalOrder(
+    @CurrentUser() user: any,
+    @Body() dto: { tenantId: string; items: any[] }
+  ) {
+    return this.salesService.createPortalOrder(user.id, dto.tenantId, dto.items);
   }
 }

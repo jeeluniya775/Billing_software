@@ -24,21 +24,40 @@ export class AuthService {
     // 2. Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // 3. Create Tenant and Admin User in a transaction
+    // 3. Create Tenant and User in a transaction
     const result = await this.prisma.$transaction(async (tx) => {
-      const tenant = await tx.tenant.create({
-        data: { name: dto.companyName },
-      });
+      let tenant: any = null;
+      const role = dto.role || (dto.companyName ? 'OWNER' : 'CUSTOMER');
+
+      if (role === 'OWNER' && dto.companyName) {
+        tenant = await tx.tenant.create({
+          data: { name: dto.companyName },
+        });
+      }
 
       const user = await tx.user.create({
         data: {
-          name: dto.adminName,
+          name: dto.name,
           email: dto.email,
           password: hashedPassword,
-          role: 'ADMIN',
-          tenantId: tenant.id,
+          role: role as any,
+          tenantId: tenant ? tenant.id : undefined,
+          ownedTenants: (tenant && role === 'OWNER') ? {
+            connect: [{ id: tenant.id }]
+          } : undefined,
         },
+        include: {
+          ownedTenants: true,
+        }
       });
+
+      // If OWNER, set them as the owner of the tenant
+      if (tenant && role === 'OWNER') {
+        await tx.tenant.update({
+          where: { id: tenant.id },
+          data: { ownerId: user.id }
+        });
+      }
 
       return { user, tenant };
     });
@@ -53,8 +72,10 @@ export class AuthService {
         name: result.user.name,
         email: result.user.email,
         role: result.user.role,
+        tenantId: result.user.tenantId,
       },
       tenant: result.tenant,
+      ownedTenants: (result.user as any).ownedTenants || [],
     };
   }
 
@@ -62,7 +83,10 @@ export class AuthService {
     try {
       const user = await this.prisma.user.findFirst({
         where: { email: dto.email },
-        include: { tenant: true },
+        include: { 
+          tenant: true,
+          ownedTenants: true,
+        },
       });
 
       if (!user || !(await bcrypt.compare(dto.password, user.password))) {
@@ -78,8 +102,10 @@ export class AuthService {
           name: user.name,
           email: user.email,
           role: user.role,
+          tenantId: user.tenantId,
         },
         tenant: user.tenant,
+        ownedTenants: user.ownedTenants,
       };
     } catch (error) {
       console.error('[AuthService] Login error:', error);

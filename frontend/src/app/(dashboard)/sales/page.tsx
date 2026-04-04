@@ -39,9 +39,9 @@ const columns = [
     accessorKey: 'customerName',
     header: 'Customer',
     cell: ({ row }: { row: import('@tanstack/react-table').Row<Sale> }) => (
-      <Link href={`/customers/${row.original.customerId}`} className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline">
+      <span className="font-semibold text-neutral-900 dark:text-white">
         {row.original.customerName}
-      </Link>
+      </span>
     )
   },
   {
