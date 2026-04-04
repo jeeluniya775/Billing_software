@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { 
   ArrowRightLeft, Trash2, Calculator, QrCode, Tag, 
   MapPin, User, Building, ArrowDownRight, Info,
-  ShieldCheck, AlertTriangle, CheckCircle2, Loader2
+  ShieldCheck, AlertTriangle, CheckCircle2, Loader2,
+  Search, Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,11 @@ import {
 import { Asset } from '@/types/asset';
 import { assetService } from '@/services/asset.service';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { DepreciationScheduleModal } from './DepreciationScheduleModal';
+import { AssetDisposalModal } from './AssetDisposalModal';
+import { AssetTagModal } from './AssetTagModal';
+import { TagTemplateConfigModal, TagTemplate } from './TagTemplateConfigModal';
 
 interface AssetLifecycleProps {
   assets: Asset[];
@@ -25,22 +31,37 @@ interface AssetLifecycleProps {
 export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
   const { toast } = useToast();
   const [selectedAssetId, setSelectedAssetId] = useState<string>(assets[0]?.id || '');
-  const [targetLocation, setTargetLocation] = useState('HQ');
+  const [targetLocation, setTargetLocation] = useState('Corporate HQ - NY');
   const [targetDepartment, setTargetDepartment] = useState('IT');
   const [salvageValue, setSalvageValue] = useState(0);
   const [usefulLife, setUsefulLife] = useState(5);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Modal States
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isDisposalOpen, setIsDisposalOpen] = useState(false);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState<TagTemplate>('standard-qr');
 
   const selectedAsset = assets.find(a => a.id === selectedAssetId);
 
+  // Auto-select first asset on load
+  useEffect(() => {
+    if (!selectedAssetId && assets.length > 0) {
+      setSelectedAssetId(assets[0].id);
+    }
+  }, [assets, selectedAssetId]);
+
   useEffect(() => {
     if (selectedAsset) {
-      setSalvageValue(Math.floor(selectedAsset.purchaseCost * 0.1));
+      // Default salvage value is 10% of cost
+      setSalvageValue(Math.floor((selectedAsset.purchaseCost || 0) * 0.1));
     }
-  }, [selectedAssetId]);
+  }, [selectedAssetId, assets]);
 
   const annualDepreciation = selectedAsset 
-    ? Math.max(0, (selectedAsset.purchaseCost - salvageValue) / usefulLife)
+    ? Math.max(0, ((selectedAsset.purchaseCost || 0) - salvageValue) / usefulLife)
     : 0;
 
   const handleTransfer = async () => {
@@ -53,7 +74,7 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
       });
       toast({
         title: 'Transfer Complete',
-        description: `Asset has been moved to ${targetLocation}.`,
+        description: `${selectedAsset?.name} has been moved to ${targetLocation}.`,
       });
       onRefresh?.();
     } catch (error) {
@@ -67,27 +88,27 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
     }
   };
 
-  const handleDisposal = async () => {
+  const onConfirmDisposal = async (data: any) => {
     if (!selectedAssetId) return;
-    if (!confirm('Are you sure you want to dispose of this asset? This action cannot be undone.')) return;
-    
     setIsProcessing(true);
     try {
       await assetService.updateAsset(selectedAssetId, {
         status: 'DISPOSED',
-        currentValue: 0
+        currentValue: 0,
+        notes: `Disposed: ${data.reason}. ${data.notes}`
       });
       toast({
-        title: 'Asset Disposed',
-        description: 'The asset has been retired from inventory.',
+        title: 'Asset Retired',
+        description: 'Disposal record has been successfully created.',
       });
       onRefresh?.();
     } catch (error) {
-      toast({
-        title: 'Disposal Failed',
-        description: 'Failed to record the asset disposal.',
-        variant: 'destructive',
+       toast({
+        title: 'Disposal Error',
+        description: 'Failed to record asset disposal.',
+        variant: 'destructive'
       });
+      throw error;
     } finally {
       setIsProcessing(false);
     }
@@ -111,53 +132,57 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
            </CardHeader>
            <CardContent className="pt-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div className="space-y-4">
-                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest px-1">Source Details</p>
-                    <div className="space-y-3 p-4 bg-neutral-50 dark:bg-black rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                        <Select value={selectedAssetId} onValueChange={setSelectedAssetId}>
-                           <SelectTrigger className="h-10 text-xs font-bold bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                              <SelectValue placeholder="Select Asset" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                              {assets.map(asset => (
-                                <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>
-                              ))}
-                           </SelectContent>
-                        </Select>
-                       <div className="flex items-center gap-2 text-xs text-neutral-500 italic">
-                          <MapPin className="h-3.5 w-3.5" /> 
-                          Currently at: <span className="font-bold text-neutral-900 dark:text-white uppercase ml-1 tracking-tight">{selectedAsset?.location || 'Unknown Location'}</span>
-                       </div>
-                    </div>
-                 </div>
+                     <div className="space-y-4">
+                        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest px-1">Source Details</p>
+                        <div className="space-y-3 p-4 bg-neutral-50 dark:bg-black rounded-2xl border border-neutral-100 dark:border-neutral-800">
+                           <Select value={selectedAssetId} onValueChange={setSelectedAssetId}>
+                              <SelectTrigger className="h-10 text-[11px] font-black uppercase bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
+                                 <SelectValue placeholder="Select Asset" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
+                                 {assets.filter(a => a.status !== 'DISPOSED').map(asset => (
+                                   <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>
+                                 ))}
+                              </SelectContent>
+                           </Select>
+                           <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-bold uppercase tracking-tight">
+                              <MapPin className="h-3.5 w-3.5 text-indigo-500" /> 
+                              Origin: <span className="text-neutral-900 dark:text-white ml-1">{selectedAsset?.location || 'Unassigned'}</span>
+                           </div>
+                        </div>
+                     </div>
 
-                 <div className="space-y-4">
-                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest px-1">Destination</p>
-                    <div className="grid grid-cols-1 gap-3">
-                       <Select value={targetLocation} onValueChange={setTargetLocation}>
-                          <SelectTrigger className="h-10 text-xs font-bold bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                             <SelectValue placeholder="To Location" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                             <SelectItem value="Corporate HQ - NY">Corporate HQ - NY</SelectItem>
-                             <SelectItem value="Warehouse 01 - TX">Warehouse 01 - TX</SelectItem>
-                             <SelectItem value="Rajkot Office">Rajkot Office</SelectItem>
-                             <SelectItem value="Remote / Field">Remote / Field</SelectItem>
-                          </SelectContent>
-                       </Select>
-                       <Select value={targetDepartment} onValueChange={setTargetDepartment}>
-                          <SelectTrigger className="h-10 text-xs font-bold bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                             <SelectValue placeholder="To Department" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-                             <SelectItem value="IT">Information Technology</SelectItem>
-                             <SelectItem value="FIN">Finance & Accounts</SelectItem>
-                             <SelectItem value="ENG">Engineering</SelectItem>
-                             <SelectItem value="HR">Human Resources</SelectItem>
-                          </SelectContent>
-                       </Select>
-                    </div>
-                 </div>
+                     <div className="space-y-4">
+                        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest px-1">Destination</p>
+                        <div className="grid grid-cols-1 gap-3">
+                           <Select value={targetLocation} onValueChange={setTargetLocation}>
+                              <SelectTrigger className="h-10 text-[11px] font-black uppercase bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
+                                 <SelectValue placeholder="To Location" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                 <SelectItem value="Corporate HQ - NY">Corporate HQ - NY</SelectItem>
+                                 <SelectItem value="Production Plant - MI">Production Plant - MI</SelectItem>
+                                 <SelectItem value="Regional Hub - CA">Regional Hub - CA</SelectItem>
+                                 <SelectItem value="Warehouse 01 - TX">Warehouse 01 - TX</SelectItem>
+                                 <SelectItem value="Rajkot Tech Park">Rajkot Tech Park</SelectItem>
+                                 <SelectItem value="Remote / Home Office">Remote / Home Office</SelectItem>
+                              </SelectContent>
+                           </Select>
+                           <Select value={targetDepartment} onValueChange={setTargetDepartment}>
+                              <SelectTrigger className="h-10 text-[11px] font-black uppercase bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
+                                 <SelectValue placeholder="To Department" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                 <SelectItem value="IT">Information Technology</SelectItem>
+                                 <SelectItem value="ENG">Quality Engineering</SelectItem>
+                                 <SelectItem value="OPS">Operations & Logistics</SelectItem>
+                                 <SelectItem value="FIN">Finance & Procurement</SelectItem>
+                                 <SelectItem value="HR">Human Resources</SelectItem>
+                                 <SelectItem value="SALES">Sales & Marketing</SelectItem>
+                              </SelectContent>
+                           </Select>
+                        </div>
+                     </div>
               </div>
 
               <div className="p-4 bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl">
@@ -208,7 +233,7 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
                   type="number" 
                   value={selectedAsset?.purchaseCost || 0} 
                   readOnly
-                  className="font-black text-lg h-12 bg-neutral-50 dark:bg-neutral-900" 
+                  className="font-black text-lg h-12 bg-emerald-50/30 dark:bg-emerald-900/10 border-emerald-500/50 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 focus:ring-emerald-500 rounded-2xl" 
                  />
               </div>
               <div className="space-y-2">
@@ -217,7 +242,7 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
                   type="number" 
                   value={salvageValue} 
                   onChange={(e) => setSalvageValue(parseFloat(e.target.value) || 0)}
-                  className="font-bold h-10" 
+                  className="font-bold h-11 border-neutral-200 dark:border-neutral-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl" 
                  />
               </div>
               <div className="space-y-2">
@@ -226,7 +251,7 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
                   type="number" 
                   value={usefulLife} 
                   onChange={(e) => setUsefulLife(parseFloat(e.target.value) || 1)}
-                  className="font-bold h-10" 
+                  className="font-bold h-11 border-neutral-200 dark:border-neutral-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl" 
                  />
               </div>
               
@@ -238,9 +263,15 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
                  <p className="text-[10px] text-neutral-400 font-bold italic uppercase tracking-widest">Based on Straight Line Method</p>
               </div>
            </CardContent>
-           <CardFooter>
-              <Button variant="outline" className="w-full text-[11px] font-black uppercase tracking-widest border-emerald-100 dark:border-emerald-900/40 text-emerald-700 bg-emerald-50 hover:bg-emerald-100">Simulate Schedule</Button>
-           </CardFooter>
+            <CardFooter>
+               <Button 
+                onClick={() => setIsScheduleOpen(true)}
+                variant="outline" 
+                className="w-full text-[11px] font-black uppercase tracking-widest border-emerald-100 dark:border-emerald-900/40 text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
+               >
+                 Simulate Schedule
+               </Button>
+            </CardFooter>
         </Card>
       </div>
 
@@ -271,12 +302,11 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
                </div>
 
                <Button 
-                onClick={handleDisposal}
+                onClick={() => setIsDisposalOpen(true)}
                 disabled={isProcessing || !selectedAssetId}
-                className="mt-8 bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-[0.2em] text-[10px] h-11 px-8"
+                className="mt-8 bg-rose-600 hover:bg-rose-700 text-white font-black uppercase tracking-[0.2em] text-[10px] h-11 px-8 rounded-xl shadow-lg shadow-rose-600/20"
                >
-                 {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                 Process Disposal
+                 Begin Disposal Sequence
                </Button>
             </div>
             
@@ -297,26 +327,83 @@ export function AssetLifecycle({ assets, onRefresh }: AssetLifecycleProps) {
                <p className="text-neutral-500 text-sm leading-relaxed">Integrated QR and Barcode generation for physical asset scanning and quick auditing.</p>
             </div>
 
-            <div className="mt-8 grid grid-cols-2 gap-4">
-               <div className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-100 dark:border-neutral-800">
+             <div className="mt-8 grid grid-cols-2 gap-4">
+               <div 
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
+                  activeTemplate === 'standard-qr' ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200" : "bg-neutral-50 dark:bg-neutral-800/50 border-neutral-100 dark:border-neutral-800 hover:border-indigo-300"
+                )}
+                onClick={() => {
+                  setActiveTemplate('standard-qr');
+                  setIsTagModalOpen(true);
+                }}
+               >
                   <QrCode className="h-8 w-8 text-neutral-400" />
                   <div>
                      <p className="text-[10px] font-black uppercase text-neutral-500 tracking-widest leading-none">Standard</p>
                      <p className="text-xs font-black text-indigo-600 mt-1 uppercase">QR Label</p>
                   </div>
                </div>
-               <div className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-100 dark:border-neutral-800">
+               <div 
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
+                  activeTemplate === 'thermal-barcode' ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200" : "bg-neutral-50 dark:bg-neutral-800/50 border-neutral-100 dark:border-neutral-800 hover:border-emerald-300"
+                )}
+                onClick={() => {
+                  setActiveTemplate('thermal-barcode');
+                  setIsTagModalOpen(true);
+                }}
+               >
                   <Tag className="h-8 w-8 text-neutral-400" />
                   <div>
                      <p className="text-[10px] font-black uppercase text-neutral-500 tracking-widest leading-none">Thermal</p>
-                     <p className="text-xs font-black text-indigo-600 mt-1 uppercase">Sticker XL</p>
+                     <p className="text-xs font-black text-emerald-600 mt-1 uppercase">Sticker XL</p>
                   </div>
                </div>
             </div>
 
-            <Button variant="outline" className="mt-8 border-indigo-100 dark:border-indigo-900/50 text-indigo-600 font-black uppercase tracking-widest text-[11px] h-11 w-full bg-indigo-50/20">Configure Tag Templates</Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsConfigModalOpen(true)}
+              className="mt-8 border-indigo-100 dark:border-indigo-900/50 text-indigo-600 font-black uppercase tracking-widest text-[11px] h-11 w-full bg-indigo-50/20"
+            >
+              Configure Tag Templates
+            </Button>
          </div>
       </div>
+
+      <DepreciationScheduleModal 
+        isOpen={isScheduleOpen}
+        onOpenChange={setIsScheduleOpen}
+        asset={selectedAsset || null}
+        salvageValue={salvageValue}
+        usefulLife={usefulLife}
+      />
+
+      <AssetDisposalModal 
+        isOpen={isDisposalOpen}
+        onOpenChange={setIsDisposalOpen}
+        asset={selectedAsset || null}
+        onConfirm={onConfirmDisposal}
+      />
+
+      <AssetTagModal 
+        isOpen={isTagModalOpen}
+        onOpenChange={setIsTagModalOpen}
+        asset={selectedAsset || null}
+        template={activeTemplate}
+      />
+
+      <TagTemplateConfigModal 
+        isOpen={isConfigModalOpen}
+        onOpenChange={setIsConfigModalOpen}
+        activeTemplate={activeTemplate}
+        onSelect={(tpl) => {
+          setActiveTemplate(tpl);
+          setIsConfigModalOpen(false);
+          setIsTagModalOpen(true);
+        }}
+      />
     </div>
   );
 }
