@@ -19,36 +19,50 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
   const [imageError, setImageError] = useState<string | null>(null);
   
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const isMountedRef = useRef(true);
   const containerId = "barcode-scanner-video-container";
 
   // Camera Scanner Logic
   useEffect(() => {
+    isMountedRef.current = true;
+    
     if (activeTab === 'camera') {
       startCamera();
     } else {
       stopCamera();
     }
+
     return () => {
-      stopCamera();
+      isMountedRef.current = false;
+      stopCamera(true); // Immediate stop for unmount
     };
   }, [activeTab]);
 
   const startCamera = async () => {
+    if (!isMountedRef.current) return;
+    
     setCameraError(null);
     setIsCameraActive(false);
 
-    // Wait for the container to be available in the DOM
+    // Give React time to render the container
     setTimeout(async () => {
       try {
-        if (!document.getElementById(containerId)) return;
+        if (!isMountedRef.current) return;
+        const container = document.getElementById(containerId);
+        if (!container) return;
 
-        const html5QrCode = new Html5Qrcode(containerId);
+        // Cleanup existing if any
+        if (scannerRef.current) {
+          await stopCamera();
+        }
+
+        const html5QrCode = new Html5Qrcode(containerId, { verbose: false });
         scannerRef.current = html5QrCode;
 
         const config = {
           fps: 10,
-          qrbox: { width: 250, height: 150 }, // Aspect ratio fit for 1D barcodes
-          aspectRatio: 1.777778, // 16:9
+          qrbox: { width: 250, height: 150 },
+          aspectRatio: 1.777778,
           formatsToSupport: [
             Html5QrcodeSupportedFormats.CODE_128,
             Html5QrcodeSupportedFormats.EAN_13,
@@ -64,41 +78,56 @@ export function BarcodeScanner({ onDetected, onClose }: BarcodeScannerProps) {
         await html5QrCode.start(
           { facingMode: "environment" },
           config,
-          (decodedText) => {
-            onDetected(decodedText);
-            stopCamera();
-            onClose();
+          async (decodedText) => {
+            if (!isMountedRef.current) return;
+            // Prevent double-detection behavior
+            const scanner = scannerRef.current;
+            if (scanner && scanner.isScanning) {
+              await stopCamera();
+              onDetected(decodedText);
+              onClose();
+            }
           },
-          undefined // Error callback ignored (mostly frame failures)
+          () => {} // Ignore frame-level errors
         );
 
-        setIsCameraActive(true);
+        if (isMountedRef.current) {
+          setIsCameraActive(true);
+        }
       } catch (err: any) {
-        console.error('Camera Error:', err);
-        setCameraError(err.message || 'Could not access camera. Please check permissions.');
+        if (isMountedRef.current) {
+          console.error('Camera Error:', err);
+          setCameraError(err.message || 'Could not access camera. Please check permissions.');
+        }
       }
-    }, 100);
+    }, 150);
   };
 
-  const stopCamera = async () => {
+  const stopCamera = async (fromCleanup = false) => {
     if (scannerRef.current) {
       const scanner = scannerRef.current;
-      scannerRef.current = null; // Prevent concurrent calls
+      scannerRef.current = null;
       
       try {
         if (scanner.isScanning) {
           await scanner.stop();
         }
-        // Check if the container still exists before clearing
-        const container = document.getElementById(containerId);
-        if (container) {
-          scanner.clear();
+        // Very important: only clear if we are not currently unmounting 
+        // to avoid "node not a child of this parent" during React removals
+        if (!fromCleanup) {
+          const container = document.getElementById(containerId);
+          if (container) {
+            scanner.clear();
+          }
         }
       } catch (e) {
-        console.warn("Html5Qrcode stop/clear failed safely:", e);
+        console.warn("Html5Qrcode cleanup suppressed:", e);
       }
     }
-    setIsCameraActive(false);
+    
+    if (isMountedRef.current) {
+      setIsCameraActive(false);
+    }
   };
 
   // Image Upload Logic

@@ -34,10 +34,21 @@ export interface CreateProductDto {
 }
 
 export const productsService = {
-  async getAll(search?: string, category?: string) {
+  async getAll(options: {
+    search?: string;
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    isActive?: boolean;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    page?: number;
+    limit?: number;
+  } = {}) {
     const params = new URLSearchParams();
-    if (search) params.append('search', search);
-    if (category) params.append('category', category);
+    Object.entries(options).forEach(([key, value]) => {
+      if (value !== undefined) params.append(key, String(value));
+    });
     
     const response = await api.get(`/products?${params.toString()}`);
     return response.data;

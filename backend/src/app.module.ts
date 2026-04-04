@@ -14,13 +14,21 @@ import { MarketingModule } from './modules/marketing/marketing.module';
 import { PayrollModule } from './modules/payroll/payroll.module';
 import { AssetsModule } from './modules/assets/assets.module';
 import { TimeModule } from './modules/time/time.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
     PrismaModule,
     AuthModule,
     ProductsModule,
+    UploadsModule,
     SalesModule,
     AccountingModule,
     HRModule,
