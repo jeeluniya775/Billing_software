@@ -22,12 +22,14 @@ export class ProductsController {
   @Get('global')
   @ApiOperation({ summary: 'List all products across all tenants' })
   findGlobal(
+    @CurrentUser() user: any,
     @Query('search') search?: string,
     @Query('category') category?: string,
     @Query('minPrice') minPrice?: number,
     @Query('maxPrice') maxPrice?: number,
   ) {
-    return this.productsService.findGlobal({ search, category, minPrice, maxPrice });
+    const ownerId = user.role === 'OWNER' ? user.id : undefined;
+    return this.productsService.findGlobal({ search, category, minPrice, maxPrice }, ownerId);
   }
 
   @Get()

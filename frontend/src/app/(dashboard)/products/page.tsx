@@ -23,6 +23,7 @@ import {
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useTenantStore } from '@/store/tenant.store';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -65,6 +66,7 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
 
 export default function ProductsPage() {
   const { toast } = useToast();
+  const { selectedTenant } = useTenantStore();
   // Data State
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -133,7 +135,7 @@ export default function ProductsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [search, category, status, minPrice, maxPrice, page, sortBy, sortOrder, toast, products.length]);
+  }, [search, category, status, minPrice, maxPrice, page, sortBy, sortOrder, toast, products.length, selectedTenant?.id]);
 
   useEffect(() => {
     fetchProducts();
@@ -200,7 +202,7 @@ export default function ProductsPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <PageHeader 
-        title="Product Inventory"
+        title={selectedTenant ? `Catalog: ${selectedTenant.name}` : "Product Inventory"}
         subtitle="Manage your catalog, prices, and stock levels."
         actions={
           <div className="flex gap-3">

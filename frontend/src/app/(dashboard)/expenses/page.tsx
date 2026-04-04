@@ -27,6 +27,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import { useTenantStore } from '@/store/tenant.store';
 
 const STATUS_STYLE: Record<string, string> = {
   Paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -41,6 +42,7 @@ const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Bank Transfer', 'Credit Card'
 const PAGE_SIZE = 8;
 
 export default function ExpensesPage() {
+  const { selectedTenant } = useTenantStore();
   // Table state
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -77,7 +79,7 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedTenant?.id]);
 
   const handleRefresh = () => loadData();
 
@@ -145,7 +147,9 @@ export default function ExpensesPage() {
                <div className="h-10 w-10 bg-indigo-950 dark:bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                   <Receipt className="h-6 w-6" />
                </div>
-               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Expenses</h1>
+               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">
+                 {selectedTenant ? `${selectedTenant.name} Expenses` : "Expenses"}
+               </h1>
             </div>
             <p className="text-xs font-bold text-neutral-400 uppercase tracking-[0.2em] italic ml-1.5 flex items-center gap-2">
                Track, categorize, and manage all business expenses <Sparkles className="h-3 w-3 text-indigo-400" />

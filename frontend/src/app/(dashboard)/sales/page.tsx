@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useTenantStore } from '@/store/tenant.store';
 
 // Define Table Columns inline
 const columns = [
@@ -131,6 +132,7 @@ const columns = [
 
 
 export default function SalesPage() {
+  const { selectedTenant } = useTenantStore();
   const [sales, setSales] = useState<Sale[]>([]);
   const [summary, setSummary] = useState<SalesSummaryKPIs | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,7 +166,7 @@ export default function SalesPage() {
       }
     }
     loadData();
-  }, [statusFilter]);
+  }, [statusFilter, selectedTenant?.id]);
 
   return (
     <ProtectedRoute>
@@ -176,7 +178,9 @@ export default function SalesPage() {
                <div className="h-10 w-10 bg-indigo-950 dark:bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                   <ShoppingCart className="h-6 w-6" />
                </div>
-               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">Sales & Revenue</h1>
+               <h1 className="text-4xl font-black text-indigo-950 dark:text-white uppercase tracking-tighter">
+                 {selectedTenant ? `${selectedTenant.name} Sales` : "Sales & Revenue"}
+               </h1>
             </div>
             <p className="text-xs font-bold text-neutral-400 uppercase tracking-[0.2em] italic ml-1.5 flex items-center gap-2">
                Comprehensive dashboard for managing invoices and revenue tracking <Sparkles className="h-3 w-3 text-indigo-400" />

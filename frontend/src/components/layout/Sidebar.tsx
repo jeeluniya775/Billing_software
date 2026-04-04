@@ -56,6 +56,11 @@ const pinnedItems = [
   { label: 'Settings',    icon: Settings,      href: '/settings' },
 ];
 
+// Owner specific items
+const ownerItems = [
+  { label: 'Portfolio Catalog', icon: Package,     href: '/products/portfolio' },
+];
+
 // Customer specific items
 const customerItems = [
   { label: 'Marketplace', icon: Store,       href: '/portal' },
@@ -76,13 +81,12 @@ export function Sidebar({ className }: SidebarProps) {
 
   const isActive = (href?: string) => {
     if (!href) return false;
-    if (href === '/' && pathname === '/') return true;
-    if (href !== '/' && pathname.startsWith(href)) return true;
-    return false;
+    // Exact match for the active path
+    return pathname === href;
   };
 
   // Filter navigation items based on role
-  const allowedPinnedItems = role === 'CUSTOMER' ? customerItems : pinnedItems;
+  const allowedPinnedItems = role === 'OWNER' ? [...ownerItems, ...pinnedItems] : role === 'CUSTOMER' ? customerItems : pinnedItems;
 
   const allowedTopActions = topActions.map(item => {
     if (item.id === 'dashboard' && role === 'OWNER') {

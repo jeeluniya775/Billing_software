@@ -18,6 +18,7 @@ import { SmartAccountingPanel } from '@/components/accounting/SmartAccountingPan
 import { PageHeader } from '@/components/layout/PageHeader';
 import { accountingService } from '@/services/accounting.service';
 import { AccountingSummary } from '@/types/accounting';
+import { useTenantStore } from '@/store/tenant.store';
 
 type Tab = 'overview' | 'accounts' | 'journal' | 'ledger' | 'trial' | 'reports' | 'settings';
 
@@ -32,6 +33,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
 ];
 
 export default function AccountingPage() {
+  const { selectedTenant } = useTenantStore();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [summary, setSummary] = useState<AccountingSummary | null>(null);
   const [plData, setPlData] = useState<any>(null);
@@ -58,12 +60,12 @@ export default function AccountingPage() {
       }
     }
     loadData();
-  }, [activeTab]);
+  }, [activeTab, selectedTenant?.id]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Accounting"
+        title={selectedTenant ? `Accounting: ${selectedTenant.name}` : "Accounting"}
         subtitle="Double-entry bookkeeping · FY 2025-26"
         actions={
           <>

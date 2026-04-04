@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTenantStore } from '@/store/tenant.store';
 import { CreateShopModal } from '@/components/forms/CreateShopModal';
+import { AddManagerModal } from '@/components/forms/AddManagerModal';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 
@@ -216,10 +217,7 @@ export default function ConsolidatedDashboard() {
                  </div>
                  
                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                       <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                       <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Collection Efficiency</span>
-                    </div>
+                    <AddManagerModal tenantId={shop.id} shopName={shop.name} />
                     <span className="text-[13px] font-black text-emerald-600">{Math.round((shop.paidAmount / (shop.totalRevenue || 1)) * 100)}%</span>
                  </div>
                </Card>

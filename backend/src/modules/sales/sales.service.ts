@@ -288,11 +288,15 @@ export class SalesService {
       }
     });
 
-    const shops = tenants.map(tenant => {
+    const shops = await Promise.all(tenants.map(async (tenant) => {
       const totalRevenue = tenant.invoices.reduce((acc, inv) => acc + inv.total, 0);
       const paidAmount = tenant.invoices
         .filter((inv) => inv.status === 'PAID')
         .reduce((acc, inv) => acc + inv.total, 0);
+
+      const productCount = await this.prisma.product.count({
+        where: { tenantId: tenant.id }
+      });
 
       return {
         id: tenant.id,
@@ -301,8 +305,9 @@ export class SalesService {
         paidAmount,
         unpaidAmount: totalRevenue - paidAmount,
         invoiceCount: tenant.invoices.length,
+        productCount,
       };
-    });
+    }));
 
     const totalRevenue = shops.reduce((acc, shop) => acc + shop.totalRevenue, 0);
     const paidAmount = shops.reduce((acc, shop) => acc + shop.paidAmount, 0);
