@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
-import { MOCK_CUSTOMERS } from '@/lib/mock-customers';
-import { CustomerTag, LedgerTransaction } from '@/types/customer';
+import { customersService } from '@/services/customers.service';
+import { Customer, CustomerTag, LedgerTransaction } from '@/types/customer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,13 +26,49 @@ const formatCurrency = (amount: number, currency: string) => {
 };
 
 export default function CustomerDetailPage({ params }: { params: { id: string } }) {
-  const customer = useMemo(() => MOCK_CUSTOMERS.find(c => c.id === params.id), [params.id]);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!customer) {
+  useEffect(() => {
+    const fetchCustomer = async () => {
+      setIsLoading(true);
+      try {
+        const data = await customersService.getCustomerById(params.id);
+        setCustomer(data);
+      } catch (err) {
+        console.error("Failed to fetch customer:", err);
+        setError("Failed to load customer details.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCustomer();
+  }, [params.id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+          <p className="text-gray-500 font-medium animate-pulse">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !customer) {
     return notFound();
   }
 
-  const overLimit = customer.currentBalance > customer.creditLimit;
+  const overLimit = (customer.currentBalance || 0) > (customer.creditLimit || 0);
+  const aging = customer.aging || { current: 0, days30: 0, days60: 0, days90: 0, over90: 0 };
+  const contacts = customer.contacts || [];
+  const billingAddress = (customer.billingAddress as any) || {};
+  const shippingAddress = (customer.shippingAddress as any) || {};
+  const behaviorScore = customer.paymentBehaviorScore ?? 100;
+  const interestRate = customer.latePaymentInterestRate ?? 1.5;
+  const currency = customer.currency || 'USD';
 
   // Ledger Table Columns
   const ledgerColumns = [
@@ -63,9 +99,9 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{customer.name}</h1>
             <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase ${
-              customer.status === 'Active' ? 'bg-emerald-100 text-emerald-800' 
-              : customer.status === 'Blocked' ? 'bg-red-100 text-red-800'
-              : customer.status === 'On Hold' ? 'bg-amber-100 text-amber-800'
+              customer.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' 
+              : customer.status === 'BLOCKED' ? 'bg-red-100 text-red-800'
+              : customer.status === 'ON_HOLD' ? 'bg-amber-100 text-amber-800'
               : 'bg-gray-100 text-gray-800'
             }`}>
               {customer.status}
@@ -81,8 +117,8 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
           <div>
             <h4 className="font-medium text-red-900 dark:text-red-400">Credit Limit Exceeded</h4>
             <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-              This customer&apos;s current balance ({formatCurrency(customer.currentBalance, customer.currency)}) exceeds their credit limit of {formatCurrency(customer.creditLimit, customer.currency)}. 
-              {customer.status !== 'Blocked' && " Consider placing their account on hold."}
+              This customer&apos;s current balance ({formatCurrency(customer.currentBalance || 0, currency)}) exceeds their credit limit of {formatCurrency(customer.creditLimit || 0, currency)}. 
+              {customer.status !== 'BLOCKED' && " Consider placing their account on hold."}
             </p>
           </div>
           <Button variant="outline" className="ml-auto bg-white dark:bg-neutral-900 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400">
@@ -109,7 +145,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 text-neutral-600 dark:text-neutral-400">
                     <Building2 className="h-4 w-4 shrink-0" />
-                    <span className="text-sm font-medium text-neutral-900 dark:text-white">{customer.company}</span>
+                    <span className="text-sm font-medium text-neutral-900 dark:text-white">{customer.company || 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-3 text-neutral-600 dark:text-neutral-400">
                     <Mail className="h-4 w-4 shrink-0" />
@@ -143,11 +179,12 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                   <div className="flex flex-col gap-2 pt-2">
                     <span className="text-xs font-medium text-neutral-500">Tags</span>
                     <div className="flex flex-wrap gap-1.5">
-                      {customer.tags.map(tag => (
+                      {(customer.tags || []).map(tag => (
                         <span key={tag} className={`px-2 py-0.5 border text-[11px] font-medium rounded-md ${getTagColor(tag)}`}>
                           {tag}
                         </span>
                       ))}
+                      {(!customer.tags || customer.tags.length === 0) && <span className="text-xs text-neutral-400 font-medium">No tags</span>}
                     </div>
                   </div>
                 </div>
@@ -159,7 +196,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                 <CardTitle className="text-lg">Primary Contacts</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {customer.contacts.map(contact => (
+                {contacts.length > 0 ? contacts.map(contact => (
                   <div key={contact.id} className="p-3 rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm text-neutral-900 dark:text-white">{contact.name}</span>
@@ -171,7 +208,9 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                       <p>{contact.phone}</p>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-6 text-neutral-400 text-xs italic">No contacts added.</div>
+                )}
               </CardContent>
             </Card>
 
@@ -185,9 +224,9 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                   <div>
                     <h4 className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Billing Address</h4>
                     <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                      {customer.billingAddress.street}<br/>
-                      {customer.billingAddress.city}, {customer.billingAddress.state} {customer.billingAddress.zipCode}<br/>
-                      {customer.billingAddress.country}
+                      {billingAddress.street || 'No street'}<br/>
+                      {billingAddress.city || 'No city'}, {billingAddress.state || 'No state'} {billingAddress.zipCode || ''}<br/>
+                      {billingAddress.country || ''}
                     </p>
                   </div>
                 </div>
@@ -199,9 +238,9 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                       <p className="text-sm text-neutral-500 italic">Same as billing address</p>
                     ) : (
                       <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                        {customer.shippingAddress.street}<br/>
-                        {customer.shippingAddress.city}, {customer.shippingAddress.state} {customer.shippingAddress.zipCode}<br/>
-                        {customer.shippingAddress.country}
+                        {shippingAddress.street || 'No street'}<br/>
+                        {shippingAddress.city || 'No city'}, {shippingAddress.state || 'No state'} {shippingAddress.zipCode || ''}<br/>
+                        {shippingAddress.country || ''}
                       </p>
                     )}
                   </div>
@@ -241,7 +280,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                   {customer.paymentTerms}
                 </div>
                 <p className="text-xs text-neutral-500 mt-2">
-                  Late Interest: {customer.latePaymentInterestRate}% per month
+                  Late Interest: {interestRate}% per month
                 </p>
               </CardContent>
             </Card>
@@ -251,14 +290,14 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                 <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Behavior Score</h3>
                 <div className="flex items-end gap-3 mt-2">
                   <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {customer.paymentBehaviorScore}
+                    {behaviorScore}
                   </div>
                   <span className="text-sm font-medium text-neutral-500 mb-1">/ 100</span>
                 </div>
                 <div className="w-full h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full mt-3 overflow-hidden">
                   <div 
-                    className={`h-full rounded-full ${customer.paymentBehaviorScore > 80 ? 'bg-emerald-500' : customer.paymentBehaviorScore > 50 ? 'bg-amber-500' : 'bg-red-500'}`} 
-                    style={{ width: `${customer.paymentBehaviorScore}%` }}
+                    className={`h-full rounded-full ${behaviorScore > 80 ? 'bg-emerald-500' : behaviorScore > 50 ? 'bg-amber-500' : 'bg-red-500'}`} 
+                    style={{ width: `${behaviorScore}%` }}
                   />
                 </div>
               </CardContent>
@@ -274,23 +313,23 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div className="p-4 border border-neutral-100 dark:border-neutral-800 rounded-lg text-center bg-neutral-50 dark:bg-neutral-900/50">
                     <div className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1">Current</div>
-                    <div className="text-lg font-semibold text-neutral-900 dark:text-white">{formatCurrency(customer.aging.current, customer.currency)}</div>
+                    <div className="text-lg font-semibold text-neutral-900 dark:text-white">{formatCurrency(aging.current, currency)}</div>
                   </div>
                   <div className="p-4 border border-amber-100 dark:border-amber-900/30 rounded-lg text-center bg-amber-50/50 dark:bg-amber-900/10">
                     <div className="text-xs font-medium text-amber-600 dark:text-amber-500 uppercase tracking-wider mb-1">1-30 Days</div>
-                    <div className="text-lg font-semibold text-amber-700 dark:text-amber-400">{formatCurrency(customer.aging.days30, customer.currency)}</div>
+                    <div className="text-lg font-semibold text-amber-700 dark:text-amber-400">{formatCurrency(aging.days30, currency)}</div>
                   </div>
                   <div className="p-4 border border-orange-100 dark:border-orange-900/30 rounded-lg text-center bg-orange-50/50 dark:bg-orange-900/10">
                     <div className="text-xs font-medium text-orange-600 dark:text-orange-500 uppercase tracking-wider mb-1">31-60 Days</div>
-                    <div className="text-lg font-semibold text-orange-700 dark:text-orange-400">{formatCurrency(customer.aging.days60, customer.currency)}</div>
+                    <div className="text-lg font-semibold text-orange-700 dark:text-orange-400">{formatCurrency(aging.days60, currency)}</div>
                   </div>
                   <div className="p-4 border border-red-100 dark:border-red-900/30 rounded-lg text-center bg-red-50/50 dark:bg-red-900/10">
                     <div className="text-xs font-medium text-red-600 dark:text-red-500 uppercase tracking-wider mb-1">61-90 Days</div>
-                    <div className="text-lg font-semibold text-red-700 dark:text-red-400">{formatCurrency(customer.aging.days90, customer.currency)}</div>
+                    <div className="text-lg font-semibold text-red-700 dark:text-red-400">{formatCurrency(aging.days90, currency)}</div>
                   </div>
                   <div className="p-4 border border-red-200 dark:border-red-900/50 rounded-lg text-center bg-red-100 dark:bg-red-900/20">
                     <div className="text-xs font-medium text-red-700 dark:text-red-400 uppercase tracking-wider mb-1">90+ Days</div>
-                    <div className="text-lg font-bold text-red-800 dark:text-red-300">{formatCurrency(customer.aging.over90, customer.currency)}</div>
+                    <div className="text-lg font-bold text-red-800 dark:text-red-300">{formatCurrency(aging.over90, currency)}</div>
                   </div>
                </div>
             </CardContent>

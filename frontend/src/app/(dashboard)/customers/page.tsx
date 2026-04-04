@@ -18,12 +18,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/tables/DataTable';
-import { AddCustomerModal } from '@/components/forms/AddCustomerModal';
-import { useState, useEffect } from 'react';
+import { CustomerModal } from '@/components/customers/CustomerModal';
+import { useState, useEffect, useMemo } from 'react';
 import { customersService } from '@/services/customers.service';
 import { Customer } from '@/types/customer';
 import { Badge } from '@/components/ui/badge';
 import { CustomerKpiCards } from '@/components/customers/CustomerKpiCards';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const getTagColor = (tag: string) => {
   switch (tag) {
@@ -35,131 +44,15 @@ const getTagColor = (tag: string) => {
   }
 };
 
-const columns = [
-  {
-    accessorKey: 'name',
-    header: 'Name & Company',
-    cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const customer = row.original;
-      return (
-        <div className="flex flex-col">
-          <Link href={`/customers/${customer.id}`} className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline">
-            {customer.name}
-          </Link>
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">{customer.company}</span>
-        </div>
-      );
-    }
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const status = row.original.status || 'ACTIVE';
-      return (
-        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase ${
-          status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' 
-          : status === 'BLOCKED' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-          : status === 'ON_HOLD' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-          : 'bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-400'
-        }`}>
-          {status}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: 'tags',
-    header: 'Tags',
-    cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const tags = row.original.tags || [];
-      return (
-        <div className="flex flex-wrap gap-1">
-          {tags.map(tag => (
-            <span key={tag} className={`px-2 py-0.5 border text-[10px] font-medium rounded-md ${getTagColor(tag)}`}>
-              {tag}
-            </span>
-          ))}
-        </div>
-      );
-    }
-  },
-  {
-    accessorKey: 'currentBalance',
-    header: () => <div className="text-right">Balance</div>,
-    cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const amount = row.original.currentBalance || 0;
-      const limit = row.original.creditLimit || 0;
-      const overLimit = amount > limit;
-
-      const formatted = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: row.original.currency === 'GBP' ? 'GBP' : 'USD',
-      }).format(amount);
-
-      return (
-        <div className="flex flex-col items-end">
-          <span className={`font-medium ${overLimit ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
-            {formatted}
-          </span>
-          <span className="text-[10px] text-neutral-500">Limit: ${limit / 1000}k</span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'paymentBehaviorScore',
-    header: () => <div className="text-center">Trust Score</div>,
-    cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const score = row.original.paymentBehaviorScore || 100;
-      return (
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-16 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-            <div
-              className={`h-full rounded-full ${score > 80 ? 'bg-emerald-500' : score > 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-              style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
-            />
-          </div>
-          <span className="text-xs font-mono text-neutral-500">{score}</span>
-        </div>
-      );
-    }
-  },
-  {
-    id: 'actions',
-    cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
-      const customer = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/customers/${customer.id}`} className="cursor-pointer">
-                <Eye className="mr-2 h-4 w-4" /> View Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.id)}>
-              <Copy className="mr-2 h-4 w-4" /> Copy ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Edit Customer</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600 dark:text-red-400"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
+// Columns definition moved inside component
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
 
   const fetchCustomers = async () => {
     setIsLoading(true);
@@ -177,6 +70,157 @@ export default function CustomersPage() {
   useEffect(() => {
     fetchCustomers();
   }, []);
+
+  const handleDelete = async () => {
+    if (!customerToDelete) return;
+    setIsDeleting(true);
+    try {
+      await customersService.deleteCustomer(customerToDelete.id);
+      toast({
+        title: 'Customer Deleted',
+        description: `${customerToDelete.company} has been removed.`,
+      });
+      fetchCustomers();
+      setCustomerToDelete(null);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete customer.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'name',
+      header: 'Name & Company',
+      cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
+        const customer = row.original;
+        return (
+          <div className="flex flex-col">
+            <Link href={`/customers/${customer.id}`} className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 hover:underline transition-colors">
+              {customer.name}
+            </Link>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">{customer.company}</span>
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
+        const status = row.original.status || 'ACTIVE';
+        return (
+          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide uppercase ${
+            status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' 
+            : status === 'BLOCKED' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+            : status === 'ON_HOLD' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+            : 'bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-gray-400'
+          }`}>
+            {status}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'tags',
+      header: 'Tags',
+      cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
+        const tags = row.original.tags || [];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {tags.map(tag => (
+              <span key={tag} className={`px-2 py-0.5 border text-[10px] font-medium rounded-md ${getTagColor(tag)}`}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'currentBalance',
+      header: () => <div className="text-right">Balance</div>,
+      cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
+        const amount = row.original.currentBalance || 0;
+        const limit = row.original.creditLimit || 0;
+        const overLimit = amount > limit;
+
+        const formatted = new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: row.original.currency === 'GBP' ? 'GBP' : 'USD',
+        }).format(amount);
+
+        return (
+          <div className="flex flex-col items-end">
+            <span className={`font-medium ${overLimit ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+              {formatted}
+            </span>
+            <span className="text-[10px] text-neutral-500">Limit: ${limit / 1000}k</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'paymentBehaviorScore',
+      header: () => <div className="text-center">Trust Score</div>,
+      cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
+        const score = row.original.paymentBehaviorScore || 100;
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-16 h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+              <div
+                className={`h-full rounded-full ${score > 80 ? 'bg-emerald-500' : score > 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
+              />
+            </div>
+            <span className="text-xs font-mono text-neutral-500">{score}</span>
+          </div>
+        );
+      }
+    },
+    {
+      id: 'actions',
+      cell: ({ row }: { row: import('@tanstack/react-table').Row<Customer> }) => {
+        const customer = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link href={`/customers/${customer.id}`} className="cursor-pointer">
+                  <Eye className="mr-2 h-4 w-4" /> View Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.id)}>
+                <Copy className="mr-2 h-4 w-4" /> Copy ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setEditingCustomer(customer)}>
+                <Pencil className="mr-2 h-4 w-4" /> Edit Customer
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-red-600 dark:text-red-400" 
+                onClick={() => setCustomerToDelete(customer)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ], [toast]);
 
   const totalBalance = (customers || []).reduce((acc, curr) => acc + (curr.currentBalance || 0), 0);
   const activeCount = (customers || []).filter(c => c.status === 'ACTIVE').length;
@@ -204,7 +248,7 @@ export default function CustomersPage() {
             <Button variant="outline" className="h-12 border-neutral-100 dark:border-neutral-800 font-black uppercase tracking-widest text-[10px] rounded-2xl gap-2 hover:bg-neutral-50 shadow-sm">
                 <Download className="h-4 w-4" /> Export DB
             </Button>
-            <AddCustomerModal onSuccess={fetchCustomers} />
+            <CustomerModal onSuccess={fetchCustomers} />
           </div>
         </div>
 
@@ -260,6 +304,34 @@ export default function CustomersPage() {
              </div>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Modal */}
+        <CustomerModal 
+          open={!!editingCustomer} 
+          onOpenChange={(open) => !open && setEditingCustomer(null)}
+          customer={editingCustomer || undefined}
+          onSuccess={fetchCustomers}
+        />
+
+        {/* Delete Confirmation */}
+        <Dialog open={!!customerToDelete} onOpenChange={(open) => !open && setCustomerToDelete(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete Customer</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete <strong>{customerToDelete?.company}</strong>? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setCustomerToDelete(null)} disabled={isDeleting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                {isDeleting ? 'Deleting...' : 'Delete Customer'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </ProtectedRoute>
   );

@@ -1,16 +1,5 @@
 import { api } from './api';
-
-export interface Customer {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  company?: string;
-  taxId?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Customer } from '@/types/customer';
 
 export const customersService = {
   /**
