@@ -8,6 +8,11 @@ export class CreateExpenseDto {
   @IsOptional()
   employeeId?: string;
 
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  vendor?: string;
+
   @ApiProperty()
   @IsDateString()
   @IsNotEmpty()
@@ -41,6 +46,15 @@ export class CreateExpenseDto {
   @IsString()
   @IsOptional()
   receiptUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  isRecurring?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  recurringPeriod?: string;
 }
 
 export class UpdateExpenseDto extends CreateExpenseDto {}

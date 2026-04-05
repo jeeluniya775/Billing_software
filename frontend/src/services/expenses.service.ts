@@ -1,10 +1,18 @@
 import { api } from './api';
-import { Expense, ExpenseSummary, ExpenseCategory } from '@/types/expense';
+import { Expense, ExpenseSummary } from '@/types/expense';
 
 export const expensesService = {
   // GET /expense
-  async getExpenses(): Promise<Expense[]> {
-    const response = await api.get('/expense');
+  async getExpenses(params?: any): Promise<{ items: Expense[], meta: any }> {
+    const query = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== 'all' && value !== '') {
+          query.append(key, String(value));
+        }
+      });
+    }
+    const response = await api.get(`/expense?${query.toString()}`);
     return response.data;
   },
 
@@ -21,25 +29,24 @@ export const expensesService = {
   },
 
   // DELETE /expense/:id
-  async deleteExpense(id: string): Promise<void> {
-    await api.delete(`/expense/${id}`);
+  async deleteExpense(id: string) {
+    const response = await api.delete(`/expense/${id}`);
+    return response.data;
   },
 
-  // GET /expense/summary (Mock or implement in backend)
+  async approveExpense(id: string) {
+    const response = await api.patch(`/expense/${id}/approve`);
+    return response.data;
+  },
+
+  async rejectExpense(id: string) {
+    const response = await api.patch(`/expense/${id}/reject`);
+    return response.data;
+  },
+
+  // GET /expense/summary
   async getExpenseSummary(): Promise<ExpenseSummary> {
-    try {
-      const response = await api.get('/expense/summary');
-      return response.data;
-    } catch (err) {
-      return {
-        totalToday: 0,
-        totalThisMonth: 0,
-        totalLastMonth: 0,
-        growthPercent: 0,
-        pendingAmount: 0,
-        recurringMonthly: 0,
-        categoryBreakdown: [],
-      };
-    }
+    const response = await api.get('/expense/summary');
+    return response.data;
   },
 };

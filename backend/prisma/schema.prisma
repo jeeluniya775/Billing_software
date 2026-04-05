@@ -259,12 +259,15 @@ model Expense {
   id          String        @id @default(uuid())
   tenantId    String
   employeeId  String?
+  vendor      String?
   date        DateTime      @default(now())
   category    String
   amount      Float
   currency    String        @default("USD")
   description String
   status      ExpenseStatus @default(PENDING)
+  isRecurring Boolean       @default(false)
+  recurringPeriod String?   
   receiptUrl  String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

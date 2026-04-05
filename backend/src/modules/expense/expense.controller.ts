@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ExpenseService } from './expense.service';
 import { CreateExpenseDto, UpdateExpenseDto } from './dto/expense.dto';
+import { ExpenseQueryDto } from './dto/expense-query.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -15,7 +16,19 @@ export class ExpenseController {
   @Post()
   @ApiOperation({ summary: 'Create a new expense' })
   createExpense(@CurrentUser() user: any, @Body() dto: CreateExpenseDto) {
-    return this.expenseService.createExpense(user.tenantId, dto);
+    return this.expenseService.createExpense(user.tenantId, user.role, dto);
+  }
+
+  @Patch(':id/approve')
+  @ApiOperation({ summary: 'Approve a pending expense' })
+  approveExpense(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.expenseService.approveExpense(user.tenantId, id);
+  }
+
+  @Patch(':id/reject')
+  @ApiOperation({ summary: 'Reject a pending expense' })
+  rejectExpense(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.expenseService.rejectExpense(user.tenantId, id);
   }
 
   @Get('summary')
@@ -26,8 +39,8 @@ export class ExpenseController {
 
   @Get()
   @ApiOperation({ summary: 'List all expenses' })
-  findAllExpenses(@CurrentUser() user: any) {
-    return this.expenseService.findAllExpenses(user.tenantId);
+  findAllExpenses(@CurrentUser() user: any, @Query() query: ExpenseQueryDto) {
+    return this.expenseService.findAllExpenses(user.tenantId, query);
   }
 
   @Get(':id')
