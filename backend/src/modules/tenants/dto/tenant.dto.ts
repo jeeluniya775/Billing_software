@@ -33,8 +33,38 @@ export class CreateTenantDto {
   logoUrl?: string;
 
   @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  taxNumber?: string;
+
+  @ApiPropertyOptional({ default: 'USD' })
+  @IsString()
+  @IsOptional()
+  currency?: string;
+
+  @ApiPropertyOptional()
   @IsOptional()
   address?: any;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  street?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  country?: string;
 }
 
 export class UpdateTenantDto extends CreateTenantDto {}

@@ -21,8 +21,11 @@ export class ProductsService {
     options: {
       search?: string;
       category?: string;
+      brand?: string;
+      tags?: string[];
       minPrice?: number;
       maxPrice?: number;
+      stockStatus?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'overstock';
       isActive?: boolean;
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
@@ -33,8 +36,11 @@ export class ProductsService {
     const {
       search,
       category,
+      brand,
+      tags,
       minPrice,
       maxPrice,
+      stockStatus,
       isActive,
       sortBy = 'createdAt',
       sortOrder = 'desc',
@@ -56,12 +62,41 @@ export class ProductsService {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
           { sku: { contains: search, mode: 'insensitive' } },
+          { barcode: { contains: search, mode: 'insensitive' } },
+          { brand: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
         ],
       });
     }
 
     if (category) {
       where.AND.push({ category });
+    }
+
+    if (brand) {
+      where.AND.push({ brand: { equals: brand, mode: 'insensitive' } });
+    }
+
+    if (tags && tags.length > 0) {
+      where.AND.push({ tags: { hasSome: tags } });
+    }
+
+    if (stockStatus) {
+      switch (stockStatus) {
+        case 'out_of_stock':
+          where.AND.push({ stock: { lte: 0 } });
+          break;
+        case 'low_stock':
+          // Simplified: using a threshold or we can do more complex logic
+          where.AND.push({ stock: { lt: 10, gt: 0 } }); 
+          break;
+        case 'in_stock':
+          where.AND.push({ stock: { gt: 0 } });
+          break;
+        case 'overstock':
+          where.AND.push({ stock: { gte: 100 } });
+          break;
+      }
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
