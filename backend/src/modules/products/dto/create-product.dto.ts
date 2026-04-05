@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, Min, IsUrl, IsBoolean } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, Min, IsBoolean, IsArray } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateProductDto {
   @ApiProperty({ example: 'iPhone 15 Pro' })
@@ -12,12 +12,22 @@ export class CreateProductDto {
   @IsNotEmpty()
   sku: string;
 
-  @ApiProperty({ example: 'Latest Apple iPhone with Titanium body', required: false })
+  @ApiPropertyOptional({ example: '8801234567890' })
+  @IsString()
+  @IsOptional()
+  barcode?: string;
+
+  @ApiPropertyOptional({ example: 'Apple' })
+  @IsString()
+  @IsOptional()
+  brand?: string;
+
+  @ApiPropertyOptional({ example: 'Latest Apple iPhone with Titanium body' })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 'https://example.com/iphone.jpg', required: false })
+  @ApiPropertyOptional({ example: 'https://example.com/iphone.jpg' })
   @IsString()
   @IsOptional()
   imageUrl?: string;
@@ -37,31 +47,60 @@ export class CreateProductDto {
   @Min(0)
   price: number;
 
-  @ApiProperty({ example: 800.00, required: false })
+  @ApiPropertyOptional({ example: 800.00 })
   @IsNumber()
   @Min(0)
   @IsOptional()
   costPrice?: number;
 
-  @ApiProperty({ example: 18.0, default: 0 })
+  @ApiPropertyOptional({ example: 18.0, default: 0 })
   @IsNumber()
   @Min(0)
   @IsOptional()
   taxRate?: number;
 
-  @ApiProperty({ example: 50, default: 0 })
+  @ApiPropertyOptional({ example: 0.5 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  weight?: number;
+
+  @ApiPropertyOptional({ example: '15.0x7.5x0.8 cm' })
+  @IsString()
+  @IsOptional()
+  dimensions?: string;
+
+  @ApiPropertyOptional({ example: ['smartphone', 'electronics'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  tags?: string[];
+
+  @ApiPropertyOptional({ example: 50, default: 0 })
   @IsNumber()
   @Min(0)
   @IsOptional()
   stock?: number;
 
-  @ApiProperty({ example: 5, default: 5 })
+  @ApiPropertyOptional({ example: 5, default: 5 })
   @IsNumber()
   @Min(0)
   @IsOptional()
   lowStockAlert?: number;
 
-  @ApiProperty({ default: true })
+  @ApiPropertyOptional({ example: 2 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  minStockLevel?: number;
+
+  @ApiPropertyOptional({ example: 100 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  maxStockLevel?: number;
+
+  @ApiPropertyOptional({ default: true })
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

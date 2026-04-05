@@ -283,41 +283,75 @@ export class SalesService {
   async getConsolidatedAnalytics(ownerId: string) {
     const tenants = await this.prisma.tenant.findMany({
       where: { ownerId } as any,
-      include: {
-        invoices: true
-      }
     });
+    const tenantIds = tenants.map((t) => t.id);
 
-    const shops = await Promise.all(tenants.map(async (tenant) => {
-      const totalRevenue = tenant.invoices.reduce((acc, inv) => acc + inv.total, 0);
-      const paidAmount = tenant.invoices
-        .filter((inv) => inv.status === 'PAID')
-        .reduce((acc, inv) => acc + inv.total, 0);
+    const [allInvoices, lowStockProducts, shops] = await Promise.all([
+      this.prisma.invoice.findMany({
+        where: { tenantId: { in: tenantIds } },
+        include: { customer: { select: { name: true } }, tenant: { select: { name: true } } },
+        orderBy: { date: 'desc' },
+      }),
+      this.prisma.product.findMany({
+        where: { tenantId: { in: tenantIds }, stock: { lte: this.prisma.product.fields.lowStockAlert } as any },
+        include: { tenant: { select: { name: true } } },
+        take: 5,
+      }),
+      Promise.all(
+        tenants.map(async (tenant) => {
+          const tenantInvoices = await this.prisma.invoice.findMany({
+            where: { tenantId: tenant.id },
+          });
+          const totalRevenue = tenantInvoices.reduce((acc, inv) => acc + inv.total, 0);
+          const paidAmount = tenantInvoices
+            .filter((inv) => inv.status === 'PAID')
+            .reduce((acc, inv) => acc + inv.total, 0);
 
-      const productCount = await this.prisma.product.count({
-        where: { tenantId: tenant.id }
-      });
+          const productCount = await this.prisma.product.count({
+            where: { tenantId: tenant.id },
+          });
 
-      return {
-        id: tenant.id,
-        name: tenant.name,
-        totalRevenue,
-        paidAmount,
-        unpaidAmount: totalRevenue - paidAmount,
-        invoiceCount: tenant.invoices.length,
-        productCount,
-      };
-    }));
+          return {
+            id: tenant.id,
+            name: tenant.name,
+            totalRevenue,
+            paidAmount,
+            unpaidAmount: totalRevenue - paidAmount,
+            invoiceCount: tenantInvoices.length,
+            productCount,
+            currency: (tenant as any).currency || 'USD',
+            city: (tenant as any).city || 'Unknown',
+            taxNumber: (tenant as any).taxNumber || null,
+          };
+        }),
+      ),
+    ]);
 
     const totalRevenue = shops.reduce((acc, shop) => acc + shop.totalRevenue, 0);
     const paidAmount = shops.reduce((acc, shop) => acc + shop.paidAmount, 0);
+    const unpaidInvoices = allInvoices.filter((inv) => inv.status !== 'PAID');
+
+    // Simple revenue trend for last 7 days
+    const revenueTrend = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      const dateStr = date.toISOString().split('T')[0];
+      const dayTotal = allInvoices
+        .filter((inv) => inv.date.toISOString().split('T')[0] === dateStr)
+        .reduce((acc, inv) => acc + inv.total, 0);
+      return { date: dateStr, amount: dayTotal };
+    });
 
     return {
       shopCount: tenants.length,
       totalRevenue,
       paidAmount,
       unpaidAmount: totalRevenue - paidAmount,
-      totalInvoices: shops.reduce((acc, shop) => acc + shop.invoiceCount, 0),
+      totalInvoices: allInvoices.length,
+      unpaidInvoiceCount: unpaidInvoices.length,
+      recentInvoices: allInvoices.slice(0, 5),
+      lowStockProducts,
+      revenueTrend,
       shops,
     };
   }

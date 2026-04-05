@@ -30,6 +30,8 @@ import Image from 'next/image';
 const productSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   sku: z.string().min(2, 'SKU is required'),
+  barcode: z.string().optional().or(z.literal('')),
+  brand: z.string().optional().or(z.literal('')),
   category: z.string().min(1, 'Category is required'),
   description: z.string().optional(),
   imageUrl: z.string().optional().refine((val) => {
@@ -43,8 +45,13 @@ const productSchema = z.object({
   price: z.coerce.number().min(0, 'Price must be positive'),
   costPrice: z.coerce.number().min(0).optional(),
   taxRate: z.coerce.number().min(0).max(100).default(0),
+  weight: z.coerce.number().min(0).optional(),
+  dimensions: z.string().optional().or(z.literal('')),
+  tags: z.array(z.string()).optional().default([]),
   stock: z.coerce.number().min(0).default(0),
   lowStockAlert: z.coerce.number().min(0).default(5),
+  minStockLevel: z.coerce.number().min(0).optional(),
+  maxStockLevel: z.coerce.number().min(0).optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -80,6 +87,8 @@ export function ProductModal({
     defaultValues: product ? {
       name: product.name,
       sku: product.sku,
+      barcode: product.barcode || '',
+      brand: product.brand || '',
       category: product.category,
       description: product.description || '',
       imageUrl: product.imageUrl || '',
@@ -87,12 +96,19 @@ export function ProductModal({
       price: product.price,
       costPrice: product.costPrice || 0,
       taxRate: product.taxRate,
+      weight: product.weight || 0,
+      dimensions: product.dimensions || '',
+      tags: product.tags || [],
       stock: product.stock,
       lowStockAlert: product.lowStockAlert,
+      minStockLevel: product.minStockLevel || 0,
+      maxStockLevel: product.maxStockLevel || 0,
       isActive: product.isActive,
     } : {
       name: '',
       sku: '',
+      barcode: '',
+      brand: '',
       category: '',
       description: '',
       imageUrl: '',
@@ -100,8 +116,13 @@ export function ProductModal({
       price: 0,
       costPrice: 0,
       taxRate: 0,
+      weight: 0,
+      dimensions: '',
+      tags: [],
       stock: 0,
       lowStockAlert: 5,
+      minStockLevel: 0,
+      maxStockLevel: 0,
       isActive: true,
     },
   });
@@ -111,6 +132,8 @@ export function ProductModal({
       form.reset({
         name: product.name,
         sku: product.sku,
+        barcode: product.barcode || '',
+        brand: product.brand || '',
         category: product.category,
         description: product.description || '',
         imageUrl: product.imageUrl || '',
@@ -118,14 +141,21 @@ export function ProductModal({
         price: product.price,
         costPrice: product.costPrice || 0,
         taxRate: product.taxRate,
+        weight: product.weight || 0,
+        dimensions: product.dimensions || '',
+        tags: product.tags || [],
         stock: product.stock,
         lowStockAlert: product.lowStockAlert,
+        minStockLevel: product.minStockLevel || 0,
+        maxStockLevel: product.maxStockLevel || 0,
         isActive: product.isActive,
       });
     } else {
       form.reset({
         name: '',
         sku: '',
+        barcode: '',
+        brand: '',
         category: '',
         description: '',
         imageUrl: '',
@@ -133,8 +163,13 @@ export function ProductModal({
         price: 0,
         costPrice: 0,
         taxRate: 0,
+        weight: 0,
+        dimensions: '',
+        tags: [],
         stock: 0,
         lowStockAlert: 5,
+        minStockLevel: 0,
+        maxStockLevel: 0,
         isActive: true,
       });
     }
@@ -238,7 +273,7 @@ export function ProductModal({
       const entries = Object.entries(values).filter(([_, v]) => v !== "" && v !== null && v !== undefined);
       const payload: any = Object.fromEntries(entries);
 
-      ['price', 'costPrice', 'taxRate', 'stock', 'lowStockAlert'].forEach(key => {
+      ['price', 'costPrice', 'taxRate', 'stock', 'lowStockAlert', 'weight', 'minStockLevel', 'maxStockLevel'].forEach(key => {
         if (payload[key] !== undefined) {
           payload[key] = Number(payload[key]);
         }
@@ -300,7 +335,7 @@ export function ProductModal({
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-w-4xl w-full p-0 border-none bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl overflow-hidden">
+      <DialogContent className="max-w-5xl w-full p-0 border-none bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl overflow-hidden">
         <div className="max-h-[90vh] overflow-y-auto">
           <DialogHeader className="p-0 border-b border-white/10 bg-emerald-600">
           <div className="p-8 pt-10 relative overflow-hidden">
@@ -323,7 +358,7 @@ export function ProductModal({
                 console.error('Validation errors:', errors);
                 toast({
                   title: "Incomplete Resource Data",
-                  description: "Please scroll up and fill in the required fields (Name, SKU, Category) at the top of the form.",
+                  description: "Please check the form for errors and fill in the required fields.",
                   variant: "destructive",
                 });
               })} 
@@ -332,18 +367,36 @@ export function ProductModal({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
-                  <FormField control={form.control} name="name" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Product Name</FormLabel>
-                      <FormControl><Input placeholder="e.g. Wireless Mouse..." className="h-12 rounded-xl bg-neutral-50 dark:bg-neutral-900 border-none shadow-inner" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="name" render={({ field }) => (
+                      <FormItem className="col-span-1 md:col-span-2">
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Product Name</FormLabel>
+                        <FormControl><Input placeholder="e.g. Wireless Mouse..." className="h-12 rounded-xl bg-neutral-50 dark:bg-neutral-900 border-none shadow-inner" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="brand" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Brand / Maker</FormLabel>
+                        <FormControl><Input placeholder="e.g. Apple..." className="h-12 rounded-xl bg-neutral-50 dark:bg-neutral-900 border-none shadow-inner" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="barcode" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">UPC / EAN / Barcode</FormLabel>
+                        <FormControl><Input placeholder="e.g. 190198000..." className="h-12 rounded-xl bg-neutral-50 dark:bg-neutral-900 border-none shadow-inner" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
 
                   <FormField control={form.control} name="sku" render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center mb-1.5">
-                         <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">SKU / BARCODE</FormLabel>
+                         <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Internal SKU</FormLabel>
                          <div className="flex gap-4">
                             <button type="button" onClick={generateSKU} className="text-[10px] flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 font-black uppercase tracking-widest transition-colors">
                               <RefreshCw className="h-3 w-3" /> Magic Generate
@@ -423,9 +476,9 @@ export function ProductModal({
                            onError={() => setImgError(true)}
                          />
                          <button 
-                          type="button"
-                          onClick={() => form.setValue('imageUrl', '')}
-                          className="absolute top-4 right-4 bg-white/80 dark:bg-black/80 backdrop-blur-md p-2 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                           type="button"
+                           onClick={() => form.setValue('imageUrl', '')}
+                           className="absolute top-4 right-4 bg-white/80 dark:bg-black/80 backdrop-blur-md p-2 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                          >
                            <X className="h-4 w-4" />
                          </button>
@@ -435,7 +488,7 @@ export function ProductModal({
                           <Package className="h-10 w-10 opacity-20" />
                           <span className="text-[10px] font-medium uppercase tracking-widest opacity-50">No Image Preview</span>
                           <p className="text-[8px] text-center px-4 leading-relaxed opacity-40">
-                            Enter a direct image URL (jpg, png) below to see your product image here.
+                            Enter a direct image URL (jpg, png) or upload.
                           </p>
                        </div>
                      )}
@@ -443,7 +496,7 @@ export function ProductModal({
                   <FormField control={form.control} name="imageUrl" render={({ field }) => (
                     <FormItem>
                       <div className="flex gap-2">
-                        <FormControl><Input placeholder="https://images.unsplash.com/photo-..." className="h-12 rounded-xl bg-neutral-50 dark:bg-neutral-800 border-none shadow-inner" {...field} /></FormControl>
+                        <FormControl><Input placeholder="https://images.unsplash.com/..." className="h-12 rounded-xl bg-neutral-50 dark:bg-neutral-800 border-none shadow-inner" {...field} /></FormControl>
                         <input 
                           type="file" 
                           ref={fileInputRef} 
@@ -465,10 +518,45 @@ export function ProductModal({
                           )}
                         </Button>
                       </div>
-                      <p className="text-[9px] text-neutral-400 font-medium px-1">
-                        Tip: Right-click an image and select <span className="text-emerald-600 font-bold">'Copy Image Address'</span> or upload from device.
-                      </p>
                       <FormMessage className="text-[10px]" />
+                    </FormItem>
+                  )} />
+                </div>
+              </div>
+
+              {/* Advanced Attributes Section */}
+              <div className="bg-neutral-50 dark:bg-neutral-900/50 p-7 rounded-[2.5rem] space-y-6">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 text-emerald-600 italic">Advanced Specifications</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField control={form.control} name="weight" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Weight (kg)</FormLabel>
+                      <FormControl><Input type="number" step="0.001" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="dimensions" render={({ field }) => (
+                    <FormItem className="col-span-1 md:col-span-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Dimensions (L x W x H)</FormLabel>
+                      <FormControl><Input placeholder="e.g. 10 x 5 x 2 cm" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="tags" render={({ field }) => (
+                    <FormItem className="col-span-1 md:col-span-3">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Tags (comma separated)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="electronic, gadget, smart" 
+                          className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold"
+                          value={Array.isArray(field.value) ? field.value.join(', ') : ''}
+                          onChange={(e) => {
+                            const val = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                            field.onChange(val);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )} />
                 </div>
@@ -483,13 +571,13 @@ export function ProductModal({
               )} />
 
               {/* Pricing Section */}
-              <div className="bg-neutral-50 dark:bg-neutral-900/50 p-6 rounded-3xl space-y-6">
+              <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-7 rounded-[2.5rem] space-y-6 border border-indigo-50 dark:border-indigo-900/20">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 text-indigo-600"><Calculator className="h-4 w-4" /> Financial Configuration</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormField control={form.control} name="price" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Selling Price ($)</FormLabel>
-                      <FormControl><Input type="number" step="0.01" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold" {...field} /></FormControl>
+                      <FormControl><Input type="number" step="0.01" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold text-indigo-600" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -511,19 +599,33 @@ export function ProductModal({
               </div>
 
               {/* Inventory Section */}
-              <div className="bg-amber-50/50 dark:bg-amber-950/10 p-6 rounded-3xl space-y-6">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 text-amber-600"><Package className="h-4 w-4" /> Inventory Management</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-amber-50/50 dark:bg-amber-950/10 p-7 rounded-[2.5rem] space-y-6 border border-amber-100 dark:border-amber-900/20">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3 text-amber-600"><Package className="h-4 w-4" /> Inventory & Stock Thresholds</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <FormField control={form.control} name="stock" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Operational Stock</FormLabel>
-                      <FormControl><Input type="number" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold" {...field} /></FormControl>
+                    <FormItem className="col-span-1 md:col-span-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400 text-amber-600">Current On-Hand Stock</FormLabel>
+                      <FormControl><Input type="number" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-black text-lg" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="lowStockAlert" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Critical Alert Limit</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Warning Level</FormLabel>
+                      <FormControl><Input type="number" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold text-red-500" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="minStockLevel" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Minimum Buffer</FormLabel>
+                      <FormControl><Input type="number" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="maxStockLevel" render={({ field }) => (
+                    <FormItem className="col-span-1 md:col-span-2">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Capacity / Max Level</FormLabel>
                       <FormControl><Input type="number" className="h-12 bg-white dark:bg-neutral-950 border-none shadow-sm rounded-xl font-bold" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>

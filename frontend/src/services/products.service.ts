@@ -4,6 +4,8 @@ export interface Product {
   id: string;
   name: string;
   sku: string;
+  barcode?: string;
+  brand?: string;
   description?: string;
   imageUrl?: string;
   category: string;
@@ -11,8 +13,13 @@ export interface Product {
   price: number;
   costPrice?: number;
   taxRate: number;
+  weight?: number;
+  dimensions?: string;
+  tags?: string[];
   stock: number;
   lowStockAlert: number;
+  minStockLevel?: number;
+  maxStockLevel?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -21,6 +28,8 @@ export interface Product {
 export interface CreateProductDto {
   name: string;
   sku: string;
+  barcode?: string;
+  brand?: string;
   description?: string;
   imageUrl?: string;
   category: string;
@@ -28,8 +37,13 @@ export interface CreateProductDto {
   price: number;
   costPrice?: number;
   taxRate?: number;
+  weight?: number;
+  dimensions?: string;
+  tags?: string[];
   stock?: number;
   lowStockAlert?: number;
+  minStockLevel?: number;
+  maxStockLevel?: number;
   isActive?: boolean;
 }
 
@@ -37,8 +51,11 @@ export const productsService = {
   async getAll(options: {
     search?: string;
     category?: string;
+    brand?: string;
+    tags?: string[];
     minPrice?: number;
     maxPrice?: number;
+    stockStatus?: string;
     isActive?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
@@ -47,7 +64,13 @@ export const productsService = {
   } = {}) {
     const params = new URLSearchParams();
     Object.entries(options).forEach(([key, value]) => {
-      if (value !== undefined) params.append(key, String(value));
+      if (value !== undefined) {
+        if (Array.isArray(value)) {
+          value.forEach(v => params.append(key, String(v)));
+        } else {
+          params.append(key, String(value));
+        }
+      }
     });
     
     const response = await api.get(`/products?${params.toString()}`);

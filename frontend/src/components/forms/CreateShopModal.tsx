@@ -22,17 +22,32 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Plus, Store, Sparkles, Building2 } from 'lucide-react';
+import { Plus, Store, Sparkles, Building2, Globe, CreditCard, MapPin } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Shop name must be at least 2 characters'),
-  description: z.string().optional().or(z.literal('')),
-  email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
-  businessType: z.string().optional().or(z.literal('')),
+  description: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  businessType: z.string().optional(),
+  taxNumber: z.string().optional(),
+  currency: z.string().min(1, 'Please select a currency'),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface CreateShopModalProps {
   onSuccess?: () => void;
@@ -43,7 +58,7 @@ export function CreateShopModal({ onSuccess }: CreateShopModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
@@ -51,6 +66,12 @@ export function CreateShopModal({ onSuccess }: CreateShopModalProps) {
       email: '',
       phone: '',
       businessType: '',
+      taxNumber: '',
+      currency: 'USD',
+      street: '',
+      city: '',
+      state: '',
+      country: '',
     },
   });
 
@@ -101,9 +122,9 @@ export function CreateShopModal({ onSuccess }: CreateShopModalProps) {
            </DialogHeader>
         </div>
 
-        <div className="p-8">
+        <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 px-1">
               <FormField
                 control={form.control}
                 name="name"
@@ -162,21 +183,112 @@ export function CreateShopModal({ onSuccess }: CreateShopModalProps) {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="businessType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Industry Sector</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Retail, Electronics, Bakery" {...field} className="h-12 rounded-xl focus:ring-emerald-500 border-neutral-100 dark:border-neutral-800" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="taxNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400 flex items-center gap-1.5">
+                        <CreditCard className="h-3 w-3" /> Tax Identifier
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="VAT/GST/EIN..." {...field} className="h-12 rounded-xl focus:ring-emerald-500 border-neutral-100 dark:border-neutral-800" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <div className="pt-4">
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-neutral-400 flex items-center gap-1.5">
+                        <Globe className="h-3 w-3" /> Base Currency
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-12 rounded-xl focus:ring-emerald-500 border-neutral-100 dark:border-neutral-800">
+                            <SelectValue placeholder="Select Currency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="USD">USD ($)</SelectItem>
+                          <SelectItem value="EUR">EUR (€)</SelectItem>
+                          <SelectItem value="GBP">GBP (£)</SelectItem>
+                          <SelectItem value="INR">INR (₹)</SelectItem>
+                          <SelectItem value="AUD">AUD (A$)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="space-y-4 pt-2">
+                 <div className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3 text-neutral-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Headquarters Location</span>
+                 </div>
+                 
+                 <FormField
+                    control={form.control}
+                    name="street"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input placeholder="Street Address" {...field} className="h-11 rounded-xl focus:ring-emerald-500 border-neutral-100 dark:border-neutral-800" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                 />
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input placeholder="City" {...field} className="h-11 rounded-xl focus:ring-emerald-500 border-neutral-100 dark:border-neutral-800" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input placeholder="State / Province" {...field} className="h-11 rounded-xl focus:ring-emerald-500 border-neutral-100 dark:border-neutral-800" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                 </div>
+
+                 <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input placeholder="Country" {...field} className="h-11 rounded-xl focus:ring-emerald-500 border-neutral-100 dark:border-neutral-800" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                 />
+              </div>
+
+              <div className="pt-4 sticky bottom-0 bg-white dark:bg-neutral-900 pb-2">
                  <Button 
                    type="submit" 
                    className="w-full h-14 bg-indigo-950 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-xl shadow-indigo-950/20 transition-all gap-2"
