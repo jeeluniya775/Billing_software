@@ -42,6 +42,26 @@ async function seed() {
       },
     });
 
+    await prisma.user.create({
+      data: {
+        name: 'Shop Manager',
+        email: 'manager@demo.com',
+        password: hashedPassword,
+        role: 'SHOP_MANAGER',
+        tenantId: tenant.id,
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        name: 'Portal Customer',
+        email: 'customer@demo.com',
+        password: hashedPassword,
+        role: 'CUSTOMER',
+        tenantId: null,
+      },
+    });
+
     // 3. Create Chart of Accounts
     const cashAccount = await prisma.account.create({
       data: { name: 'Cash at Bank', code: '1001', type: 'ASSET', balance: 25000, tenantId: tenant.id },

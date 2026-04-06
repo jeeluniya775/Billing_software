@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -12,10 +12,19 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 @ApiBearerAuth()
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
+  private ensureBackofficeUser(user: any) {
+    if (user.role === 'CUSTOMER') {
+      throw new UnauthorizedException('Customers cannot access backoffice product APIs.');
+    }
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant context is required.');
+    }
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new product' })
   create(@CurrentUser() user: any, @Body() createProductDto: CreateProductDto) {
+    this.ensureBackofficeUser(user);
     return this.productsService.create(user.tenantId, createProductDto);
   }
 
@@ -28,8 +37,26 @@ export class ProductsController {
     @Query('minPrice') minPrice?: number,
     @Query('maxPrice') maxPrice?: number,
   ) {
-    const ownerId = user.role === 'OWNER' ? user.id : undefined;
-    return this.productsService.findGlobal({ search, category, minPrice, maxPrice }, ownerId);
+    if (user.role !== 'CUSTOMER') {
+      this.ensureBackofficeUser(user);
+    }
+    if (user.role === 'CUSTOMER') {
+      return this.productsService.findGlobal({ search, category, minPrice, maxPrice });
+    }
+    if (user.role === 'OWNER') {
+      return this.productsService.findGlobal({ search, category, minPrice, maxPrice }, user.id);
+    }
+    if (!user.tenantId) {
+      throw new UnauthorizedException('Tenant context is required.');
+    }
+    return this.productsService.findAll(user.tenantId, {
+      search,
+      category,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      page: 1,
+      limit: 100,
+    }).then((result) => result.items);
   }
 
   @Get()
@@ -55,6 +82,7 @@ export class ProductsController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
+    this.ensureBackofficeUser(user);
     return this.productsService.findAll(user.tenantId, {
       search,
       category,
@@ -71,6 +99,7 @@ export class ProductsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID' })
   findOne(@CurrentUser() user: any, @Param('id') id: string) {
+    this.ensureBackofficeUser(user);
     return this.productsService.findOne(user.tenantId, id);
   }
 
@@ -81,12 +110,14 @@ export class ProductsController {
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
   ) {
+    this.ensureBackofficeUser(user);
     return this.productsService.update(user.tenantId, id, updateProductDto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete product' })
   remove(@CurrentUser() user: any, @Param('id') id: string) {
+    this.ensureBackofficeUser(user);
     return this.productsService.remove(user.tenantId, id);
   }
 }

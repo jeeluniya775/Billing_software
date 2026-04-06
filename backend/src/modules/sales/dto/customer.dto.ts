@@ -110,10 +110,6 @@ export class CreateCustomerDto {
   @Type(() => ContactPersonDto)
   contacts?: ContactPersonDto[];
 
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  tenantId?: string;
 }
 
 export class UpdateCustomerDto extends CreateCustomerDto {}

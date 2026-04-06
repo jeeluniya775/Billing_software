@@ -33,7 +33,7 @@ export default function UserManagementPage() {
     name: '',
     email: '',
     password: '',
-    role: 'STAFF'
+    role: 'SHOP_MANAGER'
   });
 
   useEffect(() => {
@@ -57,13 +57,10 @@ export default function UserManagementPage() {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post(`/tenants/${selectedTenant?.id}/users`, {
-        ...formData,
-        tenantId: selectedTenant?.id
-      });
+      await api.post(`/tenants/${selectedTenant?.id}/users`, formData);
       toast.success('User created successfully');
       setShowAddForm(false);
-      setFormData({ name: '', email: '', password: '', role: 'STAFF' });
+      setFormData({ name: '', email: '', password: '', role: 'SHOP_MANAGER' });
       loadUsers();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to create user');
@@ -155,7 +152,7 @@ export default function UserManagementPage() {
                 value={formData.role}
                 onChange={e => setFormData({...formData, role: e.target.value})}
               >
-                <option value="ADMIN">Shop Manager (Full Access)</option>
+                <option value="SHOP_MANAGER">Shop Manager (Full Access)</option>
                 <option value="ACCOUNTANT">Accountant (Financial Only)</option>
                 <option value="STAFF">Standard Staff (Sales Only)</option>
               </select>
@@ -223,7 +220,7 @@ export default function UserManagementPage() {
                       <td className="py-4 px-6">
                         <Badge className={cn(
                           "text-[10px] font-black uppercase border-none",
-                          u.role === 'ADMIN' ? 'bg-indigo-50 text-indigo-700' :
+                          u.role === 'SHOP_MANAGER' ? 'bg-indigo-50 text-indigo-700' :
                           u.role === 'ACCOUNTANT' ? 'bg-amber-50 text-amber-700' :
                           'bg-neutral-100 text-neutral-600'
                         )}>

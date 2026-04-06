@@ -1,10 +1,9 @@
 import { IsEmail, IsNotEmpty, IsString, IsEnum, IsUUID } from 'class-validator';
 
 export enum UserRole {
-  ADMIN = 'ADMIN',
+  SHOP_MANAGER = 'SHOP_MANAGER',
   ACCOUNTANT = 'ACCOUNTANT',
   STAFF = 'STAFF',
-  OWNER = 'OWNER',
 }
 
 export class CreateShopUserDto {
@@ -24,7 +23,4 @@ export class CreateShopUserDto {
   @IsNotEmpty()
   role: UserRole;
 
-  @IsUUID()
-  @IsNotEmpty()
-  tenantId: string;
 }

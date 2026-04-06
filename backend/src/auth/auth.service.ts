@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -13,7 +13,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    // 1. Check if user already exists (globally or per tenant, here unique per email across DB for simplicity in registration)
+    // Global email identity is enforced to keep login deterministic.
     const existingUser = await this.prisma.user.findFirst({
       where: { email: dto.email },
     });
@@ -29,6 +29,10 @@ export class AuthService {
       let tenant: any = null;
       const role = dto.role || (dto.companyName ? 'OWNER' : 'CUSTOMER');
 
+      if (role === 'OWNER' && !dto.companyName) {
+        throw new BadRequestException('Company name is required for owner registration');
+      }
+
       if (role === 'OWNER' && dto.companyName) {
         tenant = await tx.tenant.create({
           data: { name: dto.companyName },
@@ -41,7 +45,7 @@ export class AuthService {
           email: dto.email,
           password: hashedPassword,
           role: role as any,
-          tenantId: tenant ? tenant.id : undefined,
+          tenantId: tenant?.id ?? null,
           ownedTenants: (tenant && role === 'OWNER') ? {
             connect: [{ id: tenant.id }]
           } : undefined,
@@ -81,7 +85,7 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     try {
-      const user = await this.prisma.user.findFirst({
+      const user = await this.prisma.user.findUnique({
         where: { email: dto.email },
         include: { 
           tenant: true,
@@ -111,6 +115,37 @@ export class AuthService {
       console.error('[AuthService] Login error:', error);
       throw error;
     }
+  }
+
+  async updateProfile(userId: string, dto: any) {
+    const data: any = {};
+    
+    if (dto.name) data.name = dto.name;
+    if (dto.email) data.email = dto.email;
+    
+    if (dto.password) {
+      // Check current password if provided (optional but safer)
+      if (dto.currentPassword) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (user && !(await bcrypt.compare(dto.currentPassword, user.password))) {
+          throw new UnauthorizedException('Current password incorrect');
+        }
+      }
+      data.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
+    };
   }
 
   private generateToken(user: any) {

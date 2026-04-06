@@ -32,7 +32,7 @@ export class TenantsController {
     if (user.role !== 'OWNER') {
       throw new UnauthorizedException('Insufficient permissions.');
     }
-    // TODO: Verify user actually owns this tenant
+    await this.tenantsService.ensureOwnerHasTenant(user.id, tenantId);
     return this.tenantsService.getShopUsers(tenantId);
   }
 
@@ -45,7 +45,7 @@ export class TenantsController {
     if (user.role !== 'OWNER') {
       throw new UnauthorizedException('Insufficient permissions.');
     }
-    // TODO: Verify user actually owns this tenant
+    await this.tenantsService.ensureOwnerHasTenant(user.id, tenantId);
     return this.tenantsService.createShopUser(tenantId, dto);
   }
 }

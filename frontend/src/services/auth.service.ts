@@ -12,6 +12,8 @@ export const authService = {
         useTenantStore.getState().setTenants(ownedTenants);
       } else if (tenant) {
         useTenantStore.getState().setTenants([tenant]);
+      } else {
+        useTenantStore.getState().setTenants([]);
       }
       return response.data;
     }
@@ -27,6 +29,8 @@ export const authService = {
         useTenantStore.getState().setTenants(ownedTenants);
       } else if (tenant) {
         useTenantStore.getState().setTenants([tenant]);
+      } else {
+        useTenantStore.getState().setTenants([]);
       }
       return response.data;
     }
@@ -38,8 +42,19 @@ export const authService = {
     return response.data;
   },
 
+  async updateProfile(data: any) {
+    const response = await api.patch('/auth/profile', data);
+    if (response.data && response.status === 200) {
+      // Update local storage with new user data
+      useAuthStore.getState().login(response.data, useAuthStore.getState().token || '');
+      return response.data;
+    }
+    throw new Error(response.data?.message || 'Update failed');
+  },
+
   logout() {
     useAuthStore.getState().logout();
+    useTenantStore.getState().setTenants([]);
     window.location.href = '/login';
   },
 };
