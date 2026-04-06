@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, DollarSign, CreditCard, ArrowUpRight, ArrowDownRight, Briefcase, Receipt, BarChart2 } from 'lucide-react';
+import { TrendingUp, DollarSign, CreditCard, ArrowUpRight, ArrowDownRight, Briefcase, Receipt } from 'lucide-react';
 import type { AccountingSummary } from '@/types/accounting';
 
 interface AccountingKpiCardsProps {
@@ -15,7 +15,7 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     {
       label: 'Total Assets',
       value: fmt(summary?.totalAssets || 0),
-      sub: 'Equity: ' + fmt(summary?.equity || 0),
+      sub: 'Equity: ' + fmt(summary?.totalEquity || 0),
       icon: Briefcase,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -34,8 +34,8 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Net Profit (YTD)',
-      value: fmt(summary?.netProfit || 0),
-      sub: 'Revenue: ' + fmt(summary?.grossRevenue || 0),
+      value: fmt(summary?.netIncome || 0),
+      sub: 'Revenue: ' + fmt(summary?.totalRevenue || 0),
       icon: TrendingUp,
       color: 'text-indigo-600',
       bg: 'bg-indigo-50 dark:bg-indigo-900/20',
@@ -44,8 +44,8 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Cash Flow (Feb)',
-      value: fmt(summary?.cashFlow || 0),
-      sub: 'Net operating cash',
+      value: fmt((summary?.totalRevenue || 0) - (summary?.totalExpenses || 0)),
+      sub: 'Estimated operating cash',
       icon: DollarSign,
       color: 'text-sky-600',
       bg: 'bg-sky-50 dark:bg-sky-900/20',
@@ -54,8 +54,8 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Accounts Receivable',
-      value: fmt(summary?.accountsReceivable || 0),
-      sub: 'Outstanding invoices',
+      value: fmt(summary?.totalAssets || 0),
+      sub: 'Receivable proxy',
       icon: ArrowUpRight,
       color: 'text-amber-600',
       bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -64,8 +64,8 @@ export function AccountingKpiCards({ summary }: AccountingKpiCardsProps) {
     },
     {
       label: 'Accounts Payable',
-      value: fmt(summary?.accountsPayable || 0),
-      sub: 'Vendor bills due',
+      value: fmt(summary?.totalLiabilities || 0),
+      sub: 'Payable proxy',
       icon: Receipt,
       color: 'text-purple-600',
       bg: 'bg-purple-50 dark:bg-purple-900/20',

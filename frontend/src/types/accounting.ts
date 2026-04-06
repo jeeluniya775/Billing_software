@@ -1,46 +1,34 @@
-export type AccountType = 'Assets' | 'Liabilities' | 'Equity' | 'Income' | 'Expenses';
-export type AccountStatus = 'Active' | 'Inactive';
-export type JournalStatus = 'Draft' | 'Posted' | 'Reversed';
-export type ReportPeriod = 'This Month' | 'This Quarter' | 'This Year' | 'Last Year' | 'Custom';
+export type AccountType = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
+export type JournalStatus = 'DRAFT' | 'POSTED' | 'CANCELLED';
 
 export interface Account {
   id: string;
   code: string;
   name: string;
   type: AccountType;
-  parentId?: string;
   balance: number;
-  openingBalance: number;
-  currency: string;
-  status: AccountStatus;
+  isActive: boolean;
   description?: string;
-  isHeader: boolean;
 }
 
 export interface JournalLine {
   id: string;
   accountId: string;
   accountName: string;
-  description: string;
+  description?: string;
   debit: number;
   credit: number;
 }
 
 export interface JournalEntry {
   id: string;
-  entryNo: string;
   date: string;
-  reference: string;
+  reference?: string;
   description: string;
   lines: JournalLine[];
   status: JournalStatus;
   totalDebit: number;
   totalCredit: number;
-  createdBy: string;
-  notes?: string;
-  attachmentUrl?: string;
-  isRecurring?: boolean;
-  currency: string;
 }
 
 export interface LedgerEntry {
@@ -66,12 +54,9 @@ export interface TrialBalanceRow {
 export interface AccountingSummary {
   totalAssets: number;
   totalLiabilities: number;
-  equity: number;
-  netProfit: number;
-  cashFlow: number;
-  accountsReceivable: number;
-  accountsPayable: number;
-  grossRevenue: number;
+  totalEquity: number;
+  netIncome: number;
+  totalRevenue: number;
   totalExpenses: number;
 }
 
@@ -87,4 +72,25 @@ export interface CashFlowData {
   inflow: number;
   outflow: number;
   net: number;
+}
+
+export interface AccountingSettings {
+  id: string;
+  tenantId: string;
+  fiscalYear: string;
+  baseCurrency: string;
+  periodLocked: boolean;
+  lockedAt?: string | null;
+  lockedBy?: string | null;
+}
+
+export interface RecurringJournalEntry {
+  id: string;
+  tenantId: string;
+  title: string;
+  description?: string | null;
+  frequency: string;
+  dayOfMonth: number;
+  isActive: boolean;
+  createdAt: string;
 }

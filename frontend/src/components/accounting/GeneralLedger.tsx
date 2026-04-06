@@ -1,23 +1,69 @@
 'use client';
 
 import { useState } from 'react';
-import { MOCK_ACCOUNTS, MOCK_LEDGER_ENTRIES } from '@/lib/mock-accounting';
+import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { accountingService } from '@/services/accounting.service';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 export function GeneralLedger() {
-  const [selectedAccountId, setSelectedAccountId] = useState('a4');
+  const [selectedAccountId, setSelectedAccountId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-
-  const selectedAccount = MOCK_ACCOUNTS.find(a => a.id === selectedAccountId);
-  const entries = (MOCK_LEDGER_ENTRIES[selectedAccountId] || []).filter(e => {
-    return (!dateFrom || e.date >= dateFrom) && (!dateTo || e.date <= dateTo);
+  const { data: accounts = [], isLoading: isAccountsLoading } = useQuery({
+    queryKey: ['accounting-accounts'],
+    queryFn: accountingService.getAccounts,
+  });
+  const { data: entries = [], isLoading: isLedgerLoading, refetch: refetchLedger } = useQuery({
+    queryKey: ['accounting-ledger', { selectedAccountId, dateFrom, dateTo }],
+    queryFn: () =>
+      accountingService.getLedger(selectedAccountId, {
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+      }),
+    enabled: !!selectedAccountId,
   });
 
-  const leafAccounts = MOCK_ACCOUNTS.filter(a => !a.isHeader);
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const leafAccounts = accounts;
+
+  useEffect(() => {
+    if (!selectedAccountId && leafAccounts.length > 0) {
+      setSelectedAccountId(leafAccounts[0].id);
+    }
+  }, [selectedAccountId, leafAccounts]);
+
+  const exportCsv = () => {
+    if (!selectedAccount) {
+      toast.error('Select an account first');
+      return;
+    }
+    if (entries.length === 0) {
+      toast.error('No ledger rows to export');
+      return;
+    }
+    const header = ['Date', 'Entry No', 'Description', 'Debit', 'Credit', 'Running Balance'];
+    const rows = entries.map((entry) => [
+      new Date(entry.date).toISOString().slice(0, 10),
+      entry.entryNo,
+      `"${(entry.description || '').replace(/"/g, '""')}"`,
+      entry.debit.toFixed(2),
+      entry.credit.toFixed(2),
+      entry.runningBalance.toFixed(2),
+    ]);
+    const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ledger_${selectedAccount.code}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-4">
@@ -29,6 +75,7 @@ export function GeneralLedger() {
             <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
               <SelectTrigger className="h-9 w-[260px] text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
+                {leafAccounts.length === 0 ? <SelectItem value="none" disabled>No accounts</SelectItem> : null}
                 {leafAccounts.map(a => (
                   <SelectItem key={a.id} value={a.id}>{a.code} — {a.name}</SelectItem>
                 ))}
@@ -44,7 +91,7 @@ export function GeneralLedger() {
             <Input type="date" className="h-9 text-sm w-[140px]" value={dateTo} onChange={e => setDateTo(e.target.value)} />
           </div>
         </div>
-        <Button variant="outline" size="sm" className="gap-2 h-9">
+        <Button variant="outline" size="sm" className="gap-2 h-9" onClick={exportCsv}>
           <Download className="h-3.5 w-3.5" /> Export Ledger
         </Button>
       </div>
@@ -81,7 +128,19 @@ export function GeneralLedger() {
               </tr>
             </thead>
             <tbody>
-              {entries.length === 0 ? (
+              {isAccountsLoading || isLedgerLoading ? (
+                <tr>
+                  <td colSpan={6} className="h-32 text-center text-neutral-400 text-sm">
+                    Loading ledger...
+                  </td>
+                </tr>
+              ) : !selectedAccountId ? (
+                <tr>
+                  <td colSpan={6} className="h-32 text-center text-neutral-400 text-sm">
+                    No accounts found. Create accounts in Chart of Accounts first.
+                  </td>
+                </tr>
+              ) : entries.length === 0 ? (
                 <tr><td colSpan={6} className="h-32 text-center text-neutral-400 text-sm">No ledger entries found for the selected account and date range.</td></tr>
               ) : entries.map((entry, i) => (
                 <tr key={entry.id} className={`border-b border-neutral-100 dark:border-neutral-700/50 hover:bg-neutral-50 dark:hover:bg-neutral-700/20 transition-colors ${i % 2 === 0 ? '' : 'bg-neutral-50/30 dark:bg-neutral-800/30'}`}>
@@ -109,6 +168,11 @@ export function GeneralLedger() {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 border-t border-neutral-100 dark:border-neutral-700 flex justify-end">
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => refetchLedger()}>
+            Refresh
+          </Button>
         </div>
       </div>
     </div>

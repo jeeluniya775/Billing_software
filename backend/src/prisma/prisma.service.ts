@@ -7,12 +7,13 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(configService: ConfigService) {
-    const databaseUrl = configService.get<string>('DATABASE_URL');
+    const databaseUrl = configService.get<string>('DATABASE_URL') || process.env.DATABASE_URL;
     if (!databaseUrl) {
       throw new Error('DATABASE_URL is not defined');
     }
 
-    const host = databaseUrl.split('@')[1].split(':')[0];
+    const parsed = new URL(databaseUrl);
+    const host = parsed.hostname;
 
     const isLocalhost = host === 'localhost' || host === '127.0.0.1';
 

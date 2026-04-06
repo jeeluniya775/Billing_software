@@ -5,16 +5,25 @@ import {
   ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import type { PLData, CashFlowData } from '@/types/accounting';
-import { ACCOUNT_TYPE_DISTRIBUTION } from '@/lib/mock-accounting';
 
 interface AccountingChartsProps {
   plData: PLData[];
   cashFlowData: CashFlowData[];
+  distributionData?: Array<{ name: string; value: number; color: string }>;
 }
 
 const fmtK = (v: number) => `$${(v / 1000).toFixed(0)}k`;
 
-export function AccountingCharts({ plData, cashFlowData }: AccountingChartsProps) {
+const FALLBACK_DISTRIBUTION = [
+  { name: 'Assets', value: 0, color: '#10b981' },
+  { name: 'Liabilities', value: 0, color: '#ef4444' },
+  { name: 'Equity', value: 0, color: '#6366f1' },
+  { name: 'Revenue', value: 0, color: '#14b8a6' },
+  { name: 'Expenses', value: 0, color: '#f59e0b' },
+];
+
+export function AccountingCharts({ plData, cashFlowData, distributionData }: AccountingChartsProps) {
+  const pieData = distributionData && distributionData.length > 0 ? distributionData : FALLBACK_DISTRIBUTION;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* P&L Trend */}
@@ -102,7 +111,7 @@ export function AccountingCharts({ plData, cashFlowData }: AccountingChartsProps
           <ResponsiveContainer width="100%" height="100%" minHeight={250}>
             <PieChart>
               <Pie
-                data={ACCOUNT_TYPE_DISTRIBUTION}
+                data={pieData}
                 cx="50%"
                 cy="42%"
                 outerRadius={85}
@@ -111,7 +120,7 @@ export function AccountingCharts({ plData, cashFlowData }: AccountingChartsProps
                 dataKey="value"
                 stroke="none"
               >
-                {ACCOUNT_TYPE_DISTRIBUTION.map((entry, i) => (
+                {pieData.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>

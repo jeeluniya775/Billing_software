@@ -1,32 +1,153 @@
 'use client';
 
 import { useState } from 'react';
-import { MOCK_ACCOUNTING_SUMMARY, MOCK_PL_DATA } from '@/lib/mock-accounting';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, FileText, TrendingUp, Scale, ArrowRightLeft, Receipt, Users, CreditCard } from 'lucide-react';
+import { Download, TrendingUp, Scale, RefreshCw } from 'lucide-react';
+import { accountingService } from '@/services/accounting.service';
+import { toast } from 'sonner';
 
 const REPORTS = [
   { id: 'pl', name: 'Profit & Loss', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
   { id: 'bs', name: 'Balance Sheet', icon: Scale, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-  { id: 'cf', name: 'Cash Flow Statement', icon: ArrowRightLeft, color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-900/20' },
-  { id: 'tax', name: 'Tax Summary', icon: Receipt, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-  { id: 'ar', name: 'AR Aging Report', icon: Users, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/20' },
-  { id: 'ap', name: 'AP Aging Report', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
 ];
 
 const fmt = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
+const toIsoDate = (date: Date) => date.toISOString().slice(0, 10);
 
 export function FinancialReports() {
   const [activeReport, setActiveReport] = useState('pl');
   const [period, setPeriod] = useState('This Year');
   const [comparePrev, setComparePrev] = useState(false);
-  const s = MOCK_ACCOUNTING_SUMMARY;
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+
+  const now = new Date();
+  const toDate = new Date(now);
+  const fromDate = new Date(now);
+  if (period === 'This Month') fromDate.setDate(1);
+  else if (period === 'This Quarter') fromDate.setMonth(Math.floor(fromDate.getMonth() / 3) * 3, 1);
+  else if (period === 'This Year') fromDate.setMonth(0, 1);
+  else if (period === 'Last Year') {
+    fromDate.setFullYear(fromDate.getFullYear() - 1, 0, 1);
+    toDate.setFullYear(toDate.getFullYear() - 1, 11, 31);
+  }
+
+  const from = period === 'Custom' ? customFrom : toIsoDate(fromDate);
+  const to = period === 'Custom' ? customTo : toIsoDate(toDate);
+
+  const previousFromDate = new Date(fromDate);
+  const previousToDate = new Date(toDate);
+  if (period === 'This Month') {
+    previousFromDate.setMonth(previousFromDate.getMonth() - 1, 1);
+    previousToDate.setMonth(previousToDate.getMonth() - 1, 0);
+  } else if (period === 'This Quarter') {
+    previousFromDate.setMonth(previousFromDate.getMonth() - 3, 1);
+    previousToDate.setMonth(previousToDate.getMonth() - 3);
+  } else if (period === 'This Year') {
+    previousFromDate.setFullYear(previousFromDate.getFullYear() - 1, 0, 1);
+    previousToDate.setFullYear(previousToDate.getFullYear() - 1, 11, 31);
+  } else if (period === 'Last Year') {
+    previousFromDate.setFullYear(previousFromDate.getFullYear() - 1, 0, 1);
+    previousToDate.setFullYear(previousToDate.getFullYear() - 1, 11, 31);
+  }
+
+  const previousFrom = toIsoDate(previousFromDate);
+  const previousTo = toIsoDate(previousToDate);
+  const canQuery = Boolean(from && to);
+
+  const { data: pl, isLoading: plLoading, refetch: refetchPl } = useQuery({
+    queryKey: ['accounting-pl-report', { from, to }],
+    queryFn: () => accountingService.getPLReport({ from, to }),
+    enabled: canQuery,
+  });
+  const { data: bs, isLoading: bsLoading, refetch: refetchBs } = useQuery({
+    queryKey: ['accounting-bs-report', { from, to }],
+    queryFn: () => accountingService.getBalanceSheet({ from, to }),
+    enabled: canQuery,
+  });
+
+  const { data: prevPl } = useQuery({
+    queryKey: ['accounting-pl-report-prev', { previousFrom, previousTo }],
+    queryFn: () => accountingService.getPLReport({ from: previousFrom, to: previousTo }),
+    enabled: comparePrev && period !== 'Custom',
+  });
+  const { data: prevBs } = useQuery({
+    queryKey: ['accounting-bs-report-prev', { previousFrom, previousTo }],
+    queryFn: () => accountingService.getBalanceSheet({ from: previousFrom, to: previousTo }),
+    enabled: comparePrev && period !== 'Custom',
+  });
+
+  const isLoading = activeReport === 'pl' ? plLoading : bsLoading;
+  const hasContent = activeReport === 'pl'
+    ? Boolean((pl?.revenue?.length || 0) + (pl?.expenses?.length || 0))
+    : Boolean((bs?.assets?.length || 0) + (bs?.liabilities?.length || 0) + (bs?.equity?.length || 0));
+
+  const refreshActiveReport = () => {
+    if (activeReport === 'pl') refetchPl();
+    else refetchBs();
+  };
+
+  const exportCsv = () => {
+    if (!canQuery) {
+      toast.error('Select a valid date range first');
+      return;
+    }
+
+    let content = '';
+    let fileName = '';
+    if (activeReport === 'pl') {
+      if (!pl) {
+        toast.error('No Profit & Loss data to export');
+        return;
+      }
+      fileName = `profit_loss_${from}_${to}.csv`;
+      const revenueRows = (pl.revenue || []).map((item: { name: string; amount: number }) => [`Revenue`, item.name, item.amount.toFixed(2)].join(','));
+      const expenseRows = (pl.expenses || []).map((item: { name: string; amount: number }) => [`Expense`, item.name, item.amount.toFixed(2)].join(','));
+      content = [
+        'Section,Account,Amount',
+        ...revenueRows,
+        `Total Revenue,,${(pl.totalRevenue || 0).toFixed(2)}`,
+        ...expenseRows,
+        `Total Expenses,,${(pl.totalExpenses || 0).toFixed(2)}`,
+        `Net Income,,${(pl.netIncome || 0).toFixed(2)}`,
+      ].join('\n');
+    } else {
+      if (!bs) {
+        toast.error('No Balance Sheet data to export');
+        return;
+      }
+      fileName = `balance_sheet_${from}_${to}.csv`;
+      const assetRows = (bs.assets || []).map((item: { name: string; amount: number }) => [`Asset`, item.name, item.amount.toFixed(2)].join(','));
+      const liabilityRows = (bs.liabilities || []).map((item: { name: string; amount: number }) => [`Liability`, item.name, item.amount.toFixed(2)].join(','));
+      const equityRows = (bs.equity || []).map((item: { name: string; amount: number }) => [`Equity`, item.name, item.amount.toFixed(2)].join(','));
+      content = [
+        'Section,Account,Amount',
+        ...assetRows,
+        `Total Assets,,${(bs.totalAssets || 0).toFixed(2)}`,
+        ...liabilityRows,
+        `Total Liabilities,,${(bs.totalLiabilities || 0).toFixed(2)}`,
+        ...equityRows,
+        `Total Equity,,${(bs.totalEquity || 0).toFixed(2)}`,
+      ].join('\n');
+    }
+
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const validCustomRange = period !== 'Custom' || (Boolean(customFrom) && Boolean(customTo) && customFrom <= customTo);
 
   return (
     <div className="space-y-5">
       {/* Report Selector */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-2 gap-3">
         {REPORTS.map(r => {
           const Icon = r.icon;
           return (
@@ -53,17 +174,23 @@ export function FinancialReports() {
               {['This Month', 'This Quarter', 'This Year', 'Last Year', 'Custom'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
             </SelectContent>
           </Select>
+          {period === 'Custom' && (
+            <>
+              <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="h-9 px-3 text-sm border border-neutral-200 dark:border-neutral-700 rounded-lg bg-transparent dark:text-white" />
+              <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-9 px-3 text-sm border border-neutral-200 dark:border-neutral-700 rounded-lg bg-transparent dark:text-white" />
+            </>
+          )}
           <label className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 cursor-pointer select-none">
             <input type="checkbox" className="rounded" checked={comparePrev} onChange={e => setComparePrev(e.target.checked)} />
             Compare previous period
           </label>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
-            <Download className="h-3.5 w-3.5" /> PDF
+          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs" onClick={refreshActiveReport} disabled={!validCustomRange || !canQuery}>
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs">
-            <FileText className="h-3.5 w-3.5" /> Excel
+          <Button variant="outline" size="sm" className="gap-2 h-9 text-xs" onClick={exportCsv} disabled={!validCustomRange || !canQuery}>
+            <Download className="h-3.5 w-3.5" /> CSV
           </Button>
         </div>
       </div>
@@ -74,84 +201,89 @@ export function FinancialReports() {
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">
             {REPORTS.find(r => r.id === activeReport)?.name}
           </h3>
-          <p className="text-xs text-neutral-500 mt-0.5">Period: {period}{comparePrev && ' vs Previous Year'}</p>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Period: {period} ({from || '---'} to {to || '---'}){comparePrev && period !== 'Custom' && ` vs ${previousFrom} to ${previousTo}`}
+          </p>
         </div>
 
-        {/* P&L */}
-        {activeReport === 'pl' && (
+        {!validCustomRange ? (
+          <div className="p-8 text-sm text-red-500">Custom date range is invalid. Please select valid From/To dates.</div>
+        ) : isLoading ? (
+          <div className="p-8 text-sm text-neutral-400">Loading report data...</div>
+        ) : !hasContent ? (
+          <div className="p-8 text-sm text-neutral-400">No posted accounting data found for this period.</div>
+        ) : activeReport === 'pl' ? (
           <div className="p-6 space-y-4">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase text-emerald-600 tracking-wider">Income</p>
-              {[['Sales Revenue', s.grossRevenue * 0.877], ['Service Revenue', s.grossRevenue * 0.098], ['Other Income', s.grossRevenue * 0.025]].map(([k, v]) => (
-                <div key={k as string} className="flex justify-between text-sm py-1 border-b border-neutral-100 dark:border-neutral-700/50">
-                  <span className="text-gray-600 dark:text-gray-400">{k}</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{fmt(v as number)}</span>
+              {(pl?.revenue || []).map((item: any) => (
+                <div key={item.name as string} className="flex justify-between text-sm py-1 border-b border-neutral-100 dark:border-neutral-700/50">
+                  <span className="text-gray-600 dark:text-gray-400">{item.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{fmt(item.amount)}</span>
                 </div>
               ))}
               <div className="flex justify-between text-sm py-1.5">
                 <span className="font-semibold text-gray-900 dark:text-white">Total Revenue</span>
-                <span className="font-bold text-emerald-600">{fmt(s.grossRevenue)}</span>
+                <span className="font-bold text-emerald-600">{fmt(pl?.totalRevenue || 0)}</span>
               </div>
             </div>
             <div className="space-y-2 mt-4">
               <p className="text-xs font-semibold uppercase text-red-500 tracking-wider">Expenses</p>
-              {[['COGS', s.totalExpenses * 0.479], ['Salaries', s.totalExpenses * 0.263], ['Rent', s.totalExpenses * 0.091], ['Marketing', s.totalExpenses * 0.071], ['Other', s.totalExpenses * 0.096]].map(([k, v]) => (
-                <div key={k as string} className="flex justify-between text-sm py-1 border-b border-neutral-100 dark:border-neutral-700/50">
-                  <span className="text-gray-600 dark:text-gray-400">{k}</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{fmt(v as number)}</span>
+              {(pl?.expenses || []).map((item: any) => (
+                <div key={item.name as string} className="flex justify-between text-sm py-1 border-b border-neutral-100 dark:border-neutral-700/50">
+                  <span className="text-gray-600 dark:text-gray-400">{item.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{fmt(item.amount)}</span>
                 </div>
               ))}
               <div className="flex justify-between text-sm py-1.5">
                 <span className="font-semibold text-gray-900 dark:text-white">Total Expenses</span>
-                <span className="font-bold text-red-600">{fmt(s.totalExpenses)}</span>
+                <span className="font-bold text-red-600">{fmt(pl?.totalExpenses || 0)}</span>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t-2 border-gray-200 dark:border-gray-600">
               <div className="flex justify-between text-base">
                 <span className="font-bold text-gray-900 dark:text-white">Net Profit</span>
-                <span className="text-xl font-extrabold text-indigo-600">{fmt(s.netProfit)}</span>
+                <span className="text-xl font-extrabold text-indigo-600">{fmt(pl?.netIncome || 0)}</span>
               </div>
-              <p className="text-xs text-neutral-500 mt-1">Profit Margin: {((s.netProfit / s.grossRevenue) * 100).toFixed(1)}%</p>
+              <p className="text-xs text-neutral-500 mt-1">Profit Margin: {pl?.totalRevenue ? (((pl.netIncome / pl.totalRevenue) * 100).toFixed(1)) : '0.0'}%</p>
+              {comparePrev && period !== 'Custom' && (
+                <p className="text-xs text-neutral-500 mt-1">
+                  Previous Net Income: <span className="font-semibold">{fmt(prevPl?.netIncome || 0)}</span>
+                </p>
+              )}
             </div>
           </div>
-        )}
-
-        {/* Balance Sheet */}
-        {activeReport === 'bs' && (
+        ) : (
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-xs font-semibold uppercase text-emerald-600 tracking-wider mb-3">Assets</p>
-              {[['Cash & Equivalents', 48000], ['Accounts Receivable', 92000], ['Inventory', 35000], ['Fixed Assets', 180000], ['Other Assets', 70000]].map(([k, v]) => (
-                <div key={k as string} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-700/50">
-                  <span className="text-gray-600 dark:text-gray-400">{k}</span>
-                  <span className="font-medium">{fmt(v as number)}</span>
+              {(bs?.assets || []).map((item: any) => (
+                <div key={item.name as string} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-700/50">
+                  <span className="text-gray-600 dark:text-gray-400">{item.name}</span>
+                  <span className="font-medium">{fmt(item.amount)}</span>
                 </div>
               ))}
               <div className="flex justify-between text-sm py-2 font-bold text-emerald-600 border-t border-emerald-200">
-                <span>Total Assets</span><span>{fmt(s.totalAssets)}</span>
+                <span>Total Assets</span><span>{fmt(bs?.totalAssets || 0)}</span>
               </div>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase text-red-500 tracking-wider mb-3">Liabilities & Equity</p>
-              {[['Accounts Payable', 42000], ['Short-term Loans', 30000], ['Tax Payable', 12000], ['Long-term Debt', 100000], ['Share Capital', 150000], ['Retained Earnings', 80000]].map(([k, v]) => (
-                <div key={k as string} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-700/50">
-                  <span className="text-gray-600 dark:text-gray-400">{k}</span>
-                  <span className="font-medium">{fmt(v as number)}</span>
+              {[...(bs?.liabilities || []), ...(bs?.equity || [])].map((item: any) => (
+                <div key={item.name as string} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-700/50">
+                  <span className="text-gray-600 dark:text-gray-400">{item.name}</span>
+                  <span className="font-medium">{fmt(item.amount)}</span>
                 </div>
               ))}
               <div className="flex justify-between text-sm py-2 font-bold text-indigo-600 border-t border-indigo-200">
-                <span>Total L + E</span><span>{fmt(s.totalLiabilities + s.equity)}</span>
+                <span>Total L + E</span><span>{fmt((bs?.totalLiabilities || 0) + (bs?.totalEquity || 0))}</span>
               </div>
+              {comparePrev && period !== 'Custom' && (
+                <p className="text-xs text-neutral-500 mt-2">
+                  Previous Total L + E: <span className="font-semibold">{fmt((prevBs?.totalLiabilities || 0) + (prevBs?.totalEquity || 0))}</span>
+                </p>
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Other reports placeholder */}
-        {!['pl', 'bs'].includes(activeReport) && (
-          <div className="p-6 flex flex-col items-center justify-center h-40 text-neutral-400">
-            <FileText className="h-10 w-10 mb-3 opacity-40" />
-            <p className="font-medium text-gray-600 dark:text-gray-400">{REPORTS.find(r => r.id === activeReport)?.name}</p>
-            <p className="text-xs mt-1">Select period and click <span className="font-semibold">Excel</span> or <span className="font-semibold">PDF</span> to generate report</p>
           </div>
         )}
       </div>
