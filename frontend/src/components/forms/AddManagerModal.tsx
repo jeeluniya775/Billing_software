@@ -51,17 +51,14 @@ export function AddManagerModal({ tenantId, shopName }: AddManagerModalProps) {
       name: '',
       email: '',
       password: '',
-      role: 'ADMIN',
+      role: 'SHOP_MANAGER',
     },
   });
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
     try {
-      await api.post(`/tenants/${tenantId}/users`, {
-        ...values,
-        tenantId,
-      });
+      await api.post(`/tenants/${tenantId}/users`, values);
       toast({
         title: "Access Granted!",
         description: `Manager account created for ${shopName}.`,

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -38,15 +38,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         
         if (ownsTenant) {
           activeTenantId = headerTenantId;
+        } else {
+          throw new ForbiddenException('You can only switch to shops you own.');
         }
       } else {
-        // For non-owners, we could verify if they are a member of this tenant
-        const isMember = await this.prisma.user.findFirst({
-          where: { id: userId, tenantId: headerTenantId }
-        });
-        if (isMember) {
-          activeTenantId = headerTenantId;
-        }
+        // Non-owners are always scoped to their assigned shop.
+        throw new ForbiddenException('You are restricted to your assigned shop.');
       }
     }
 

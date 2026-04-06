@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
 import { CreateInvoiceDto, UpdateInvoiceDto } from './dto/invoice.dto';
@@ -10,13 +10,12 @@ export class SalesService {
   // --- Customer Operations ---
 
   async createCustomer(tenantId: string, dto: CreateCustomerDto) {
-    const targetTenantId = dto.tenantId || tenantId;
     const { contacts, ...rest } = dto;
     
     return this.prisma.customer.create({
       data: {
         ...rest,
-        tenantId: targetTenantId,
+        tenantId,
         contacts: {
           create: contacts || [],
         },
@@ -228,6 +227,31 @@ export class SalesService {
   }
 
   async createPortalOrder(userId: string, tenantId: string, items: any[]) {
+    if (!tenantId) {
+      throw new BadRequestException('shopId (tenantId) is required');
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new BadRequestException('At least one order item is required');
+    }
+
+    const productIds = items.map((item) => item.productId).filter(Boolean);
+    if (productIds.length !== items.length) {
+      throw new BadRequestException('Each order item must include a productId');
+    }
+
+    const products = await this.prisma.product.findMany({
+      where: {
+        id: { in: productIds },
+        tenantId,
+        isActive: true,
+      },
+      select: { id: true, name: true, price: true, tenantId: true },
+    });
+    if (products.length !== items.length) {
+      throw new ForbiddenException('Order items must belong to the selected shop.');
+    }
+    const priceById = new Map(products.map((product) => [product.id, product.price]));
+
     // 1. Find or create a customer profile for this user in THIS tenant
     let customer = await this.prisma.customer.findFirst({
       where: { userId, tenantId },
@@ -249,7 +273,21 @@ export class SalesService {
     }
 
     // 2. Create the invoice
-    const subtotal = items.reduce((acc, item) => acc + (item.rate * item.quantity), 0);
+    const normalizedItems = items.map((item) => {
+      const rate = priceById.get(item.productId) || 0;
+      return {
+        productId: item.productId,
+        description: item.description || products.find((p) => p.id === item.productId)?.name || 'Product',
+        quantity: Number(item.quantity) || 0,
+        rate,
+      };
+    }).filter((item) => item.quantity > 0);
+
+    if (normalizedItems.length === 0) {
+      throw new BadRequestException('Order items must have quantity greater than zero');
+    }
+
+    const subtotal = normalizedItems.reduce((acc, item) => acc + (item.rate * item.quantity), 0);
     const taxTotal = subtotal * 0.1; // 10% default for portal
     const total = subtotal + taxTotal;
 
@@ -264,7 +302,7 @@ export class SalesService {
         total,
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         items: {
-          create: items.map(item => ({
+          create: normalizedItems.map(item => ({
             productId: item.productId,
             description: item.description,
             quantity: item.quantity,

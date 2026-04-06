@@ -16,13 +16,14 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
+    const role = useAuthStore.getState().user?.role;
     const tenantId = useTenantStore.getState().selectedTenant?.id;
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    if (tenantId) {
+    if (tenantId && role !== 'CUSTOMER') {
       config.headers['X-Tenant-Id'] = tenantId;
     }
 

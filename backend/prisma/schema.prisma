@@ -43,7 +43,7 @@ model Tenant {
 
 model User {
   id               String     @id @default(uuid())
-  tenantId         String
+  tenantId         String?
   name             String
   email            String
   password         String
@@ -52,9 +52,8 @@ model User {
   updatedAt        DateTime   @updatedAt
   customerProfiles Customer[]
   ownedTenants     Tenant[]   @relation("TenantOwner")
-  tenant           Tenant     @relation(fields: [tenantId], references: [id])
-
-  @@unique([email, tenantId])
+  tenant           Tenant?    @relation(fields: [tenantId], references: [id])
+  @@unique([email])
 }
 
 model Product {
@@ -405,6 +404,7 @@ enum Role {
   ADMIN
   ACCOUNTANT
   STAFF
+  SHOP_MANAGER
   OWNER
   CUSTOMER
 }

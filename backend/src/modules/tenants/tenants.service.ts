@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTenantDto } from './dto/tenant.dto';
 
@@ -38,6 +38,16 @@ export class TenantsService {
     });
   }
 
+  async ensureOwnerHasTenant(ownerId: string, tenantId: string) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { id: tenantId, ownerId },
+      select: { id: true },
+    });
+    if (!tenant) {
+      throw new ForbiddenException('You do not have access to this shop.');
+    }
+  }
+
   async getShopUsers(tenantId: string) {
     return this.prisma.user.findMany({
       where: { tenantId },
@@ -59,7 +69,7 @@ export class TenantsService {
         name: dto.name,
         email: dto.email,
         password: hashedPassword,
-        role: dto.role,
+        role: dto.role === 'ADMIN' ? 'SHOP_MANAGER' : dto.role,
         tenantId,
       }
     });
