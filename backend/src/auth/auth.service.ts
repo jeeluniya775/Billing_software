@@ -113,6 +113,37 @@ export class AuthService {
     }
   }
 
+  async updateProfile(userId: string, dto: any) {
+    const data: any = {};
+    
+    if (dto.name) data.name = dto.name;
+    if (dto.email) data.email = dto.email;
+    
+    if (dto.password) {
+      // Check current password if provided (optional but safer)
+      if (dto.currentPassword) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (user && !(await bcrypt.compare(dto.currentPassword, user.password))) {
+          throw new UnauthorizedException('Current password incorrect');
+        }
+      }
+      data.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
+    };
+  }
+
   private generateToken(user: any) {
     const payload = { 
       sub: user.id, 

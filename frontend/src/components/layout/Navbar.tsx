@@ -2,11 +2,17 @@
 
 import { useUIStore } from '@/store/ui.store';
 import { useTenantStore } from '@/store/tenant.store';
-import { Menu, Bell, Moon, Sun, Plus, LayoutGrid } from 'lucide-react';
+import { Menu, Bell, Moon, Sun, LayoutGrid, User as UserIcon, Settings as SettingsIcon, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { CreateShopModal } from '@/components/forms/CreateShopModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export function Navbar() {
   const { toggleSidebar, theme, toggleTheme } = useUIStore();
@@ -79,9 +85,35 @@ export function Navbar() {
           <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white dark:border-neutral-900"></span>
         </button>
 
-        <div className="h-8 w-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-[10px] font-black text-emerald-700">
-           JU
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="h-9 w-9 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-[10px] font-black text-emerald-700 hover:ring-4 hover:ring-emerald-500/10 transition-all outline-none">
+              {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'JU'}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl shadow-2xl border-none bg-white dark:bg-zinc-900 mt-2">
+            <Link href="/profile">
+              <DropdownMenuItem className="gap-3 p-3 rounded-xl cursor-pointer hover:bg-neutral-50 group text-[10px] font-bold uppercase tracking-widest text-neutral-600 transition-all">
+                <UserIcon className="h-4 w-4 text-neutral-400 group-hover:text-indigo-600" /> Account View
+              </DropdownMenuItem>
+            </Link>
+            
+            <Link href="/settings">
+              <DropdownMenuItem className="gap-3 p-3 rounded-xl cursor-pointer hover:bg-neutral-50 group text-[10px] font-bold uppercase tracking-widest text-neutral-600 transition-all">
+                <SettingsIcon className="h-4 w-4 text-neutral-400 group-hover:text-amber-600" /> Settings
+              </DropdownMenuItem>
+            </Link>
+            
+            <div className="h-px bg-neutral-50 dark:bg-neutral-800 my-2 mx-1" />
+            
+            <DropdownMenuItem 
+              onClick={() => useAuthStore.getState().logout()}
+              className="gap-3 p-3 rounded-xl cursor-pointer hover:bg-rose-50 group text-[10px] font-bold uppercase tracking-widest text-rose-600 transition-all"
+            >
+              <LogOut className="h-4 w-4 text-rose-400 group-hover:text-rose-600" /> Terminate Session
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

@@ -38,6 +38,16 @@ export const authService = {
     return response.data;
   },
 
+  async updateProfile(data: any) {
+    const response = await api.patch('/auth/profile', data);
+    if (response.data && response.status === 200) {
+      // Update local storage with new user data
+      useAuthStore.getState().login(response.data, useAuthStore.getState().token || '');
+      return response.data;
+    }
+    throw new Error(response.data?.message || 'Update failed');
+  },
+
   logout() {
     useAuthStore.getState().logout();
     window.location.href = '/login';
